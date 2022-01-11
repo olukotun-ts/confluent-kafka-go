@@ -18,11 +18,11 @@ jobs:
 
     steps:
       - checkout
-      - run: wget -qO - https://packages.confluent.io/deb/5.4/archive.key | sudo apt-key add -
       - run: go version
       - run: sudo apt-get update -q
-      # - run: sudo apt-get install confluent-librdkafka-plugins -y
+      - run: sudo apt-get install librdkafka-dev
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
+      - run: cd kafka && go build ./...
       - run: for dir in kafka examples ; do (cd $dir && go get ${BUILD_TYPE} ./...) ; done
       - run: for dir in kafka examples ; do (cd $dir && go install ${BUILD_TYPE} ./...) ; done
       - run: if [[ -f .do_lint ]]; then golint -set_exit_status ./examples/... ./kafka/... ./kafkatest/... ./soaktest/... ; fi
