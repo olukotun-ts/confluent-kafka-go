@@ -10,7 +10,6 @@ jobs:
           password: $DOCKER_PASSWORD
     environment:
       # - GOBIN="$GOPATH/bin"
-      # - PATH="$PATH:$GOPATH/bin"
       - EXPECT_LINK_INFO="dynamic"
       - BUILD_TYPE='-tags dynamic'
       # Figure out how to set paths
@@ -20,7 +19,7 @@ jobs:
       - LIBRDKAFKA_VERSION=master
 
     steps:
-      # - checkout
+      - checkout
       # - run: wget -qO - https://packages.confluent.io/deb/5.4/archive.key | sudo apt-key add -
       - run: go version
       - run: sudo apt-get update -q
