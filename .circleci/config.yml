@@ -1,13 +1,5 @@
 version: 2.1
 jobs:
-  macos-build:
-    macos:
-      xcode: "9.2"
-    steps:
-      - run:
-          name: The First Step OSX
-          command: |
-            echo 'Hello World!'
   linux-build:
     machine:
       image: ubuntu-2004:202010-01
@@ -16,3 +8,15 @@ jobs:
           name: Linux step
           command: |
             echo 'Hello World Linux!'
+  macos-build:
+    macos:
+      xcode: "9.2"
+    steps:
+      - run: echo "hello world macos"
+
+workflows:
+  doit:
+    jobs:
+      - linux-build
+      - macos-build
+
