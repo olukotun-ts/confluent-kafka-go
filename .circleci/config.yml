@@ -9,13 +9,11 @@ jobs:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD
     environment:
-      # - GOBIN="$GOPATH/bin"
       - EXPECT_LINK_INFO="dynamic"
       - BUILD_TYPE='-tags dynamic'
-      # Figure out how to set paths
-      # - PKG_CONFIG_PATH="$HOME/gopath/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib/pkgconfig"
-      # - LD_LIBRARY_PATH="$HOME/gopath/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
-      # - DYLD_LIBRARY_PATH="$HOME/gopath/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
+      - PKG_CONFIG_PATH="$HOME/gopath/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib/pkgconfig"
+      - LD_LIBRARY_PATH="$HOME/gopath/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
+      - DYLD_LIBRARY_PATH="$HOME/gopath/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
       - LIBRDKAFKA_VERSION=master
 
     steps:
@@ -25,6 +23,13 @@ jobs:
       - run: sudo apt-get update -q
       # - run: sudo apt-get install confluent-librdkafka-plugins -y
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
+      - run: for dir in kafka examples ; do (cd $dir && go get ${BUILD_TYPE} ./...) ; done
+      - run: for dir in kafka examples ; do (cd $dir && go install ${BUILD_TYPE} ./...) ; done
+      - run: if [[ -f .do_lint ]]; then golint -set_exit_status ./examples/... ./kafka/... ./kafkatest/... ./soaktest/... ; fi
+      - run: for dir in kafka ; do (cd $dir && go test -timeout 180s -v ${BUILD_TYPE} ./...) ; done
+      - run: go-kafkacat --help
+      - run: library-version
+      - run: (library-version | grep "$EXPECT_LINK_INFO") || (echo "Incorrect linkage, expected $EXPECT_LINK_INFO" ; false)
 
   macos-build:
     macos:
