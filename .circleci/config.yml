@@ -18,6 +18,9 @@ jobs:
       - LIBRDKAFKA_VERSION=master
 
     steps:
+      - run: sudo apt-get update -q
+      - run: sudo apt-get install confluent-librdkafka-plugins -y
+      - run: echo which go
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
 
   macos-build:
