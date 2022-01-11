@@ -1,8 +1,12 @@
 version: 2.1
 jobs:
   linux-build:
-    machine:
-      image: ubuntu-2004:202010-01
+    docker: # run the steps with Docker
+      # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
+      - image: circleci/golang:1.16
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
     steps:
       - run:
           name: Linux step
@@ -19,4 +23,3 @@ workflows:
     jobs:
       - linux-build
       - macos-build
-
