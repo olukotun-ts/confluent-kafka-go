@@ -20,11 +20,10 @@ jobs:
 
     steps:
       - checkout
-      # - run: wget -qO - https://packages.confluent.io/deb/5.4/archive.key | sudo apt-key add -
+      - run: wget -qO - https://packages.confluent.io/deb/5.4/archive.key | sudo apt-key add -
       - run: go version
       - run: sudo apt-get update -q
-      - run: sudo apt-get install confluent-librdkafka-plugins -y
-      - run: echo which go
+      # - run: sudo apt-get install confluent-librdkafka-plugins -y
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
 
   macos-build:
