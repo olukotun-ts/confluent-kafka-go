@@ -22,6 +22,7 @@ jobs:
       - run: sudo apt-get update -q
       - run: sudo apt-get install librdkafka-dev
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
+      - run: go mod init github.com/confluentinc/confluent-kafka-go
       - run: go build ./...
       - run: for dir in kafka examples ; do (cd $dir && go get ${BUILD_TYPE} ./...) ; done
       - run: for dir in kafka examples ; do (cd $dir && go install ${BUILD_TYPE} ./...) ; done
