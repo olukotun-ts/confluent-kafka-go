@@ -1,18 +1,18 @@
 version: 2.1
 jobs:
-  - build:
-      macos:
-        xcode: "9.2"
-      steps:
-        - run:
-          name: The First Step OSX
-          command: |
-            echo 'Hello World!'
-  - build:
-      machine:
-        image: ubuntu-2004:202010-01
-      steps:
-        - run:
-          name: Linux step
-          command: |
-            echo 'Hello World Linux!'
+  macos-build:
+    macos:
+      xcode: "9.2"
+    steps:
+      - run:
+        name: The First Step OSX
+        command: |
+          echo 'Hello World!'
+  linux-build:
+    machine:
+      image: ubuntu-2004:202010-01
+    steps:
+      - run:
+        name: Linux step
+        command: |
+          echo 'Hello World Linux!'
