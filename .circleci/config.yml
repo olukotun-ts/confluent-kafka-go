@@ -19,6 +19,7 @@ jobs:
       - LIBRDKAFKA_VERSION=master
 
     steps:
+      - mkdir -p ~/github.com/confluentinc/confluent-kafka-go
       - checkout
       # - run: wget -qO - https://packages.confluent.io/deb/5.4/archive.key | sudo apt-key add -
       - run: go version
