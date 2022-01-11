@@ -1,7 +1,7 @@
 version: 2.1
 jobs:
   linux-build:
-    working_directory: ~/github.com/confluentinc/confluent-kafka-go
+    working_directory: /go/src/github.com/confluentinc/confluent-kafka-go
     docker: # run the steps with Docker
       # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
       - image: circleci/golang:1.16
@@ -11,9 +11,9 @@ jobs:
     environment:
       - EXPECT_LINK_INFO="dynamic"
       - BUILD_TYPE='-tags dynamic'
-      - PKG_CONFIG_PATH="$HOME/github.com/confluentinc/confluent-kafka-go/tmp-build/lib/pkgconfig"
-      - LD_LIBRARY_PATH="$HOME/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
-      - DYLD_LIBRARY_PATH="$HOME/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
+      - PKG_CONFIG_PATH="$GOPATH/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib/pkgconfig"
+      - LD_LIBRARY_PATH="$GOPATH/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
+      - DYLD_LIBRARY_PATH="$GOPATH/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
       - LIBRDKAFKA_VERSION=master
 
     steps:
@@ -24,7 +24,6 @@ jobs:
       - run: rm -rf tmp-build
       - run: bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
-      # - run: go build ./...
       - run: for dir in kafka examples ; do (cd $dir && go get ${BUILD_TYPE} ./...) ; done
       - run: for dir in kafka examples ; do (cd $dir && go install ${BUILD_TYPE} ./...) ; done
       - run: if [[ -f .do_lint ]]; then golint -set_exit_status ./examples/... ./kafka/... ./kafkatest/... ./soaktest/... ; fi
