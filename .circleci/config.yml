@@ -1,6 +1,7 @@
 version: 2.1
 jobs:
   linux-build:
+    working_directory: github.com/confluentinc/confluent-kafka-go
     docker: # run the steps with Docker
       # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
       - image: circleci/golang:1.16
@@ -8,8 +9,8 @@ jobs:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD
     environment:
-      - GOBIN="$GOPATH/bin"
-      - PATH="$PATH:$GOPATH/bin"
+      # - GOBIN="$GOPATH/bin"
+      # - PATH="$PATH:$GOPATH/bin"
       - EXPECT_LINK_INFO="dynamic"
       - BUILD_TYPE='-tags dynamic'
       # Figure out how to set paths
