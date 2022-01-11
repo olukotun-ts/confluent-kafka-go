@@ -8,16 +8,20 @@ jobs:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD
     environment:
+      - GOBIN="$GOPATH/bin"
       - PATH="$PATH:$GOPATH/bin"
-      - GOPATH="github.com/confluentinc/confluent-kafka-go"
       - EXPECT_LINK_INFO="dynamic"
       - BUILD_TYPE='-tags dynamic'
-      - PKG_CONFIG_PATH="$HOME/gopath/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib/pkgconfig"
-      - LD_LIBRARY_PATH="$HOME/gopath/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
-      - DYLD_LIBRARY_PATH="$HOME/gopath/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
+      # Figure out how to set paths
+      # - PKG_CONFIG_PATH="$HOME/gopath/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib/pkgconfig"
+      # - LD_LIBRARY_PATH="$HOME/gopath/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
+      # - DYLD_LIBRARY_PATH="$HOME/gopath/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
       - LIBRDKAFKA_VERSION=master
 
     steps:
+      - checkout
+      - run: wget -qO - https://packages.confluent.io/deb/5.4/archive.key | sudo apt-key add -
+      - run: go
       - run: sudo apt-get update -q
       - run: sudo apt-get install confluent-librdkafka-plugins -y
       - run: echo which go
