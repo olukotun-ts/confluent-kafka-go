@@ -12,8 +12,8 @@ jobs:
       - EXPECT_LINK_INFO="dynamic"
       - BUILD_TYPE='-tags dynamic'
       - PKG_CONFIG_PATH="$GOPATH/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib/pkgconfig"
-      - LD_LIBRARY_PATH="$GOPATH/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
-      - DYLD_LIBRARY_PATH="$GOPATH/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
+      - LD_LIBRARY_PATH="$GOPATH/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
+      - DYLD_LIBRARY_PATH="$GOPATH/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
       - LIBRDKAFKA_VERSION=master
 
     steps:
