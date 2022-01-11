@@ -1,7 +1,7 @@
 version: 2.1
 jobs:
   linux-build:
-    working_directory: github.com/confluentinc/confluent-kafka-go
+    working_directory: ~/github.com/confluentinc/confluent-kafka-go
     docker: # run the steps with Docker
       # CircleCI Go images available at: https://hub.docker.com/r/circleci/golang/
       - image: circleci/golang:1.16
@@ -19,7 +19,6 @@ jobs:
       - LIBRDKAFKA_VERSION=master
 
     steps:
-      - run: mkdir -p ~/github.com/confluentinc/confluent-kafka-go
       - checkout
       # - run: wget -qO - https://packages.confluent.io/deb/5.4/archive.key | sudo apt-key add -
       - run: go version
