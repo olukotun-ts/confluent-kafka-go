@@ -21,6 +21,8 @@ jobs:
       - run: go version
       - run: sudo apt-get update -q
       - run: sudo apt-get install librdkafka-dev
+      - run: rm -rf tmp-build
+      - run: bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
       - run: go build ./...
