@@ -32,3 +32,4 @@ curl -sL "https://github.com/edenhill/librdkafka/archive/${VERSION}.tar.gz" | \
 ./configure --prefix="$PREFIXDIR"
 make -j
 make install
+popd
