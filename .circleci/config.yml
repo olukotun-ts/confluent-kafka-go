@@ -24,7 +24,7 @@ jobs:
       - run: rm -rf tmp-build
       - run: bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
-      - run: for dir in kafka examples ; do (cd $dir && && go mod init && go get ${BUILD_TYPE} ./...) ; done
+      - run: for dir in kafka examples ; do (cd $dir && go mod init && go get ${BUILD_TYPE} ./...) ; done
       - run: for dir in kafka examples ; do (cd $dir && go install ${BUILD_TYPE} ./...) ; done
       - run: if [[ -f .do_lint ]]; then golint -set_exit_status ./examples/... ./kafka/... ./kafkatest/... ./soaktest/... ; fi
       - run: for dir in kafka ; do (cd $dir && go test -timeout 180s -v ${BUILD_TYPE} ./...) ; done
@@ -32,14 +32,7 @@ jobs:
       - run: library-version
       - run: (library-version | grep "$EXPECT_LINK_INFO") || (echo "Incorrect linkage, expected $EXPECT_LINK_INFO" ; false)
 
-  macos-build:
-    macos:
-      xcode: "9.2"
-    steps:
-      - run: echo "hello world macos"
-
 workflows:
-  doit:
+  build-and-test:
     jobs:
       - linux-build
-      - macos-build
