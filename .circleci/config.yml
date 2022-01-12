@@ -8,12 +8,12 @@ jobs:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD
     environment:
-      - EXPECT_LINK_INFO="dynamic"
-      - BUILD_TYPE='-tags dynamic'
-      - PKG_CONFIG_PATH="$GOPATH/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib/pkgconfig"
-      - LD_LIBRARY_PATH="$GOPATH/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
-      - DYLD_LIBRARY_PATH="$GOPATH/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib"
-      - LIBRDKAFKA_VERSION=master
+      EXPECT_LINK_INFO: dynamic
+      BUILD_TYPE: -tags dynamic
+      PKG_CONFIG_PATH: $CIRCLE_WORKING_DIRECTORY/tmp-build/lib/pkgconfig
+      LD_LIBRARY_PATH: $CIRCLE_WORKING_DIRECTORY/tmp-build/lib
+      DYLD_LIBRARY_PATH: $CIRCLE_WORKING_DIRECTORY/tmp-build/lib
+      LIBRDKAFKA_VERSION: master
 
     steps:
       - checkout
