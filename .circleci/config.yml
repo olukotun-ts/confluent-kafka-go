@@ -10,9 +10,9 @@ jobs:
     environment:
       EXPECT_LINK_INFO: dynamic
       BUILD_TYPE: -tags dynamic
-      PKG_CONFIG_PATH: $HOME/project/tmp-build/lib/pkgconfig
-      LD_LIBRARY_PATH: $HOME/project/tmp-build/lib
-      DYLD_LIBRARY_PATH: $HOME/project/tmp-build/lib
+      PKG_CONFIG_PATH: /home/circleci/project/tmp-build/lib/pkgconfig
+      LD_LIBRARY_PATH: /home/circleci/project/tmp-build/lib
+      DYLD_LIBRARY_PATH: /home/circleci/project/tmp-build/lib
       LIBRDKAFKA_VERSION: master
 
     steps:
