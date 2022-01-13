@@ -1,5 +1,44 @@
 version: 2.1
+
+orbs:
+  win: circleci/windows@2.3.0
+
+executors:
+  linux:
+    docker:
+      - image: cimg/go:1.16
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
+  osx:
+    macos:      
+      xcode: 12.5.1
+  windows:
+    win/default
+
 jobs:
+  build-static:
+    executor: << parameters.platform >>
+    environment:
+      EXPECT_LINK_INFO: static
+    steps:
+      - checkout
+      - run: go version
+      - run: sudo apt-get update -q
+      - run: sudo apt-get install librdkafka-dev
+      - run: rm -rf tmp-build
+      - run: if [[ -n $BUILD_TYPE ]]; then bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build ; fi
+      - run: bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build
+      - run: go get -u golang.org/x/lint/golint && touch .do_lint
+      - run: go mod init $CIRCLE_PROJECT_REPONAME
+      - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
+      - run: for dir in kafka examples ; do (cd $dir && go install $BUILD_TYPE ./...) ; done
+      - run: if [[ -f .do_lint ]]; then golint -set_exit_status ./examples/... ./kafka/... ./kafkatest/... ./soaktest/... ; fi
+      - run: for dir in kafka ; do (cd $dir && go test -timeout 180s -v $BUILD_TYPE ./...) ; done
+      - run: go-kafkacat --help
+      - run: library-version
+      - run: (library-version | grep "$EXPECT_LINK_INFO") || (echo "Incorrect linkage, expected $EXPECT_LINK_INFO" ; false)
+
   linux-build-dynamic:
     docker:
       - image: cimg/go:1.16
@@ -36,3 +75,7 @@ workflows:
   build-and-test:
     jobs:
       - linux-build-dynamic
+      - build-static:
+          matrix:
+            parameters:
+              platform: ["linux", "osx", "windows"]
