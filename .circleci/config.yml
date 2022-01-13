@@ -1,7 +1,7 @@
 version: 2.1
 jobs:
   linux-build-dynamic:
-    # working_directory: /go/src/github.com/confluentinc/confluent-kafka-go
+    working_directory: /go/src/github.com/confluentinc/confluent-kafka-go
     docker:
       - image: cimg/go:1.16
         auth:
@@ -10,20 +10,14 @@ jobs:
     environment:
       EXPECT_LINK_INFO: dynamic
       BUILD_TYPE: -tags dynamic
-      PKG_CONFIG_PATH: /home/circleci/project/tmp-build/lib/pkgconfig
-      LD_LIBRARY_PATH: /home/circleci/project/tmp-build/lib
-      DYLD_LIBRARY_PATH: /home/circleci/project/tmp-build/lib
+      PKG_CONFIG_PATH: $GOPATH/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib/pkgconfig
+      LD_LIBRARY_PATH: $GOPATH/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib
+      DYLD_LIBRARY_PATH: $GOPATH/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib
       LIBRDKAFKA_VERSION: master
 
     steps:
       - checkout
       - run: go version
-
-      # - run: wget -qO - https://packages.confluent.io/deb/5.4/archive.key | sudo apt-key add -
-      # - run: sudo add-apt-repository "deb [arch=amd64] https://packages.confluent.io/deb/5.4 stable main" -y
-      # - run: sudo apt-get update -q
-      # - run: sudo apt-get install confluent-librdkafka-plugins -y
-
       - run: sudo apt-get update -q
       - run: sudo apt-get install librdkafka-dev
       - run: rm -rf tmp-build
