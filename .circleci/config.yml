@@ -19,13 +19,13 @@ jobs:
       - checkout
       - run: go version
 
-      - run: wget -qO - https://packages.confluent.io/deb/5.4/archive.key | sudo apt-key add -
-      - run: sudo add-apt-repository "deb [arch=amd64] https://packages.confluent.io/deb/5.4 stable main" -y
-      - run: sudo apt-get update -q
-      - run: sudo apt-get install confluent-librdkafka-plugins -y
-
+      # - run: wget -qO - https://packages.confluent.io/deb/5.4/archive.key | sudo apt-key add -
+      # - run: sudo add-apt-repository "deb [arch=amd64] https://packages.confluent.io/deb/5.4 stable main" -y
       # - run: sudo apt-get update -q
-      # - run: sudo apt-get install librdkafka-dev
+      # - run: sudo apt-get install confluent-librdkafka-plugins -y
+
+      - run: sudo apt-get update -q
+      - run: sudo apt-get install librdkafka-dev
       - run: rm -rf tmp-build
       - run: bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
