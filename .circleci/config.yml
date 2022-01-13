@@ -1,7 +1,7 @@
 version: 2.1
 jobs:
   linux-build-dynamic:
-    working_directory: /go/src/github.com/confluentinc/confluent-kafka-go
+    # working_directory: /go/src/github.com/confluentinc/confluent-kafka-go
     docker:
       - image: cimg/go:1.16
         auth:
@@ -10,9 +10,9 @@ jobs:
     environment:
       EXPECT_LINK_INFO: dynamic
       BUILD_TYPE: -tags dynamic
-      PKG_CONFIG_PATH: $GOPATH/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib/pkgconfig
-      LD_LIBRARY_PATH: $GOPATH/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib
-      DYLD_LIBRARY_PATH: $GOPATH/src/github.com/confluentinc/confluent-kafka-go/tmp-build/lib
+      PKG_CONFIG_PATH: ./tmp-build/lib/pkgconfig
+      LD_LIBRARY_PATH: ./tmp-build/lib
+      DYLD_LIBRARY_PATH: ./tmp-build/lib
       LIBRDKAFKA_VERSION: master
 
     steps:
