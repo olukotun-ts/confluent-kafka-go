@@ -1,6 +1,7 @@
 version: 2.1
 
 orbs:
+  go: circleci/go@1.7.0
   win: circleci/windows@2.3.0
 
 executors:
@@ -30,6 +31,8 @@ jobs:
       EXPECT_LINK_INFO: static
     steps:
       - checkout
+      - go/install:
+          version: 1.16
       - run: go version
       - run: sudo apt-get update -q
       - run: sudo apt-get install librdkafka-dev
