@@ -39,7 +39,8 @@ jobs:
       - run: 
           name: Install librdkafka
           command: |
-            if [[ << parameters.platform >> == "osx"]] ; then
+            if [[ << parameters.platform >> == "osx"]]
+            then
               brew install librdkafka
             else
               sudo apt-get update -q
