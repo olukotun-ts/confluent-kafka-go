@@ -16,7 +16,8 @@ executors:
     macos:      
       xcode: 12.5.1
   windows:
-    win/default
+    win/default:
+      shell: /bin/bash -eo pipefail
 
 jobs:
   build-static:
