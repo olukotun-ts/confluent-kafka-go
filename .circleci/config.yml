@@ -45,13 +45,15 @@ jobs:
       - run: 
           name: Install librdkafka
           command: |
-            if [[ << parameters.platform >> == "osx" ]]
-            then
-              brew install librdkafka
-            else
-              sudo apt-get update -q
-              sudo apt-get install librdkafka-dev
-            fi
+            case << parameters.platform >> in
+              osx)
+                brew install librdkafka
+                ;;
+              linux)
+                sudo apt-get update -q
+                sudo apt-get install librdkafka-dev
+                ;;
+            esac
       - run: rm -rf tmp-build
       - run: if [[ -n $BUILD_TYPE ]]; then bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build ; fi
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
