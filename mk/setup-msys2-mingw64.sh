@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -eo pipefail
 # From https://docs.travis-ci.com/user/reference/windows/#how-do-i-use-msys2
 
 set -e
