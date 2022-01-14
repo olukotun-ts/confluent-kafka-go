@@ -48,6 +48,7 @@ jobs:
             case << parameters.platform >> in
               osx)
                 brew install librdkafka
+                echo "export PATH=$PATH:/Users/distiller/go/bin" >> $BASH_ENV
                 ;;
               linux)
                 sudo apt-get update -q
@@ -55,20 +56,13 @@ jobs:
                 ;;
               windows)
                 ./mk/setup-msys2-mingw64.sh
-                export PATH=/C/tools/msys64/mingw64/bin:$PATH
+                echo "export PATH=/C/tools/msys64/mingw64/bin:$PATH" >> $BASH_ENV
                 export MAKE=mingw32-make  # so that Autotools can find it
                 ;;
             esac
       - run: rm -rf tmp-build
       - run: if [[ -n $BUILD_TYPE ]]; then bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build ; fi
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
-      - when:
-          condition:
-            equal: [ << parameters.platform >>, "osx" ]
-          steps:
-            - run: 
-                name: Add project GOPATH to $PATH
-                command: echo "export PATH=$PATH:/Users/distiller/go/bin" >> $BASH_ENV
       - run: go mod init $CIRCLE_PROJECT_REPONAME
       - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
       - run: for dir in kafka examples ; do (cd $dir && go install $BUILD_TYPE ./...) ; done
