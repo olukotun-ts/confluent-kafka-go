@@ -16,7 +16,9 @@ executors:
     macos:      
       xcode: 12.5.1
   windows:
-    win/default
+    win/default:
+      shell: "/bin/bash -eo pipefail"
+
 
 jobs:
   build-static:
@@ -25,9 +27,9 @@ jobs:
         description: The target for the build. Must be one of "linux", "osx", or "windows".
         type: enum
         enum: ["linux", "osx", "windows"]
-        default: linux
+        default: "linux"
     executor: << parameters.platform >>
-    shell: /bin/bash -eo pipefail
+    # shell: /bin/bash -eo pipefail
     environment:
       EXPECT_LINK_INFO: static
     steps:
