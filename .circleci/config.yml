@@ -23,7 +23,8 @@ jobs:
     parameters:
       platform:
         description: The target for the build. Must be one of "linux", "osx", or "windows".
-        type: executor
+        type: enum
+        enum: ["linux", "osx", "windows"]
         default: linux
     executor: << parameters.platform >>
     shell: /bin/bash -eo pipefail
