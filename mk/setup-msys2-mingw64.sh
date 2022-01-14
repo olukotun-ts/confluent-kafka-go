@@ -1,7 +1,7 @@
-#!/bin/bash -eo pipefail
+#!/bin/bash
 # From https://docs.travis-ci.com/user/reference/windows/#how-do-i-use-msys2
 
-set -e
+set -eo pipefail
 
 [[ ! -f C:/tools/msys64/msys2_shell.cmd ]] && rm -rf C:/tools/msys64
 if [[ $(choco search --local-only mingw | grep "mingw") ]]
