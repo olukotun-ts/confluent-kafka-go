@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   go: circleci/go@1.7.0
-  win: circleci/windows@2.3.0
+  win: circleci/windows@2.4.1
 
 executors:
   linux:
