@@ -33,13 +33,19 @@ jobs:
       EXPECT_LINK_INFO: static
     steps:
       - checkout
-      - go/install:
-          version: "1.16"
+      # Add orb support for Windows go/install
+      - unless:
+          condition:
+            equal: [ << parameters.platform >>, "windows" ]
+          steps:
+            - go/install:
+                version: "1.16"
+      # Using default go version 1.17 on Windows
       - run: go version
       - run: 
           name: Install librdkafka
           command: |
-            if [[ << parameters.platform >> == "osx"]]
+            if [[ << parameters.platform >> == "osx" ]]
             then
               brew install librdkafka
             else
