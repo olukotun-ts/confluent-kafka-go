@@ -33,7 +33,7 @@ jobs:
     steps:
       - checkout
       - go/install:
-          version: 1.16
+          version: "1.16"
       - run: go version
       - run: sudo apt-get update -q
       - run: sudo apt-get install librdkafka-dev
