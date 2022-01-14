@@ -57,7 +57,7 @@ jobs:
                 ;;
               windows)
                 ./mk/setup-msys2-mingw64.sh
-                echo "export PATH=/C/tools/msys64/mingw64/bin:$PATH" >> $BASH_ENV
+                echo "export PATH='/C/tools/msys64/mingw64/bin:$PATH'" >> $BASH_ENV
                 export MAKE=mingw32-make  # so that Autotools can find it
                 ;;
             esac
