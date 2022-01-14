@@ -1,6 +1,7 @@
 version: 2.1
 
 orbs:
+  shellcheck: circleci/shellcheck@2.2.4
   go: circleci/go@1.7.0
   win: circleci/windows@2.4.1
 
@@ -83,6 +84,7 @@ jobs:
 workflows:
   build-and-test:
     jobs:
+      - shellcheck/check
       - linux-build-dynamic
       - build-static:
           matrix:
