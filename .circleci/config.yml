@@ -43,7 +43,7 @@ jobs:
       # Using default go version 1.17 on Windows
       - run: go version
       - run: 
-          name: Install librdkafka
+          name: Install librdkafka and other prerequisites
           command: |
             case << parameters.platform >> in
               osx)
@@ -53,10 +53,20 @@ jobs:
                 sudo apt-get update -q
                 sudo apt-get install librdkafka-dev
                 ;;
+              windows)
+                ./mk/setup-msys2-mingw64.sh
+                export PATH=/C/tools/msys64/mingw64/bin:$PATH
+                export MAKE=mingw32-make  # so that Autotools can find it
+                ;;
             esac
       - run: rm -rf tmp-build
       - run: if [[ -n $BUILD_TYPE ]]; then bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build ; fi
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
+      - when:
+          condition:
+            equal: [ << parameters.platform >>, "osx" ]
+          steps:
+            - echo "export PATH=$PATH:/Users/distiller/go/bin" >> $BASH_ENV
       - run: go mod init $CIRCLE_PROJECT_REPONAME
       - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
       - run: for dir in kafka examples ; do (cd $dir && go install $BUILD_TYPE ./...) ; done
