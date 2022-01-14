@@ -55,7 +55,7 @@ jobs:
                 sudo apt-get install librdkafka-dev
                 ;;
               windows)
-                choco search mingw
+                choco search mingw --local-only
                 ./mk/setup-msys2-mingw64.sh
                 export PATH=/C/tools/msys64/mingw64/bin:$PATH
                 export MAKE=mingw32-make  # so that Autotools can find it
