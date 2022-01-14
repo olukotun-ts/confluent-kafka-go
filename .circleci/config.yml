@@ -3,7 +3,7 @@ version: 2.1
 orbs:
   shellcheck: circleci/shellcheck@2.2.4
   go: circleci/go@1.7.0
-  win: circleci/windows@2.4.1
+  # win: circleci/windows@2.4.1
 
 executors:
   linux:
@@ -16,9 +16,9 @@ executors:
     macos:      
       xcode: 12.5.1
   windows:
-    win/default:
-      shell: "/bin/bash -eo pipefail"
-
+    machine:
+      image: "windows-server-2019-vs2019:stable"
+      shell: /bin/bash -eo pipefail
 
 jobs:
   build-static:
@@ -29,7 +29,6 @@ jobs:
         enum: ["linux", "osx", "windows"]
         default: "linux"
     executor: << parameters.platform >>
-    # shell: /bin/bash -eo pipefail
     environment:
       EXPECT_LINK_INFO: static
     steps:
@@ -50,7 +49,6 @@ jobs:
       - run: go-kafkacat --help
       - run: library-version
       - run: (library-version | grep "$EXPECT_LINK_INFO") || (echo "Incorrect linkage, expected $EXPECT_LINK_INFO" ; false)
-
   linux-build-dynamic:
     docker:
       - image: cimg/go:1.16
