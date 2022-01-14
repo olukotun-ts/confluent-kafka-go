@@ -66,7 +66,7 @@ jobs:
           condition:
             equal: [ << parameters.platform >>, "osx" ]
           steps:
-            - echo "export PATH=$PATH:/Users/distiller/go/bin" >> $BASH_ENV
+            - run: echo "export PATH=$PATH:/Users/distiller/go/bin" >> $BASH_ENV
       - run: go mod init $CIRCLE_PROJECT_REPONAME
       - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
       - run: for dir in kafka examples ; do (cd $dir && go install $BUILD_TYPE ./...) ; done
