@@ -16,8 +16,7 @@ executors:
     macos:      
       xcode: 12.5.1
   windows:
-    win/default:
-      shell: /bin/bash -eo pipefail
+    win/default
 
 jobs:
   build-static:
@@ -27,6 +26,7 @@ jobs:
         type: executor
         default: linux
     executor: << parameters.platform >>
+    shell: /bin/bash -eo pipefail
     environment:
       EXPECT_LINK_INFO: static
     steps:
