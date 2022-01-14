@@ -18,6 +18,13 @@ executors:
 
 jobs:
   build-static:
+    parameters:
+      platform:
+        description: The target for the build. Must be one of "linux", "osx", or "windows".
+        # try with type = executor
+        type: enum
+        enum: ["linux", "osx", "windows"]
+        default: "linux"
     executor: << parameters.platform >>
     environment:
       EXPECT_LINK_INFO: static
