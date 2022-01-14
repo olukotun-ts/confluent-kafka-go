@@ -16,5 +16,6 @@ export msys2+='& C:\\tools\\msys64\\msys2_shell.cmd -defterm -no-start'
 export mingw64="$msys2 -mingw64 -full-path -here -c "\"\$@"\" --"
 export msys2+=" -msys2 -c "\"\$@"\" --"
 $msys2 pacman --sync --noconfirm --needed mingw-w64-x86_64-toolchain
+export PATH=$PATH:/c/tools/msys64/mingw64/bin
 ## Install more MSYS2 packages from https://packages.msys2.org/base here
 # taskkill //IM gpg-agent.exe //F || true  # https://travis-ci.community/t/4967
