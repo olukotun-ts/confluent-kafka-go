@@ -35,7 +35,6 @@ jobs:
       - run: sudo apt-get install librdkafka-dev
       - run: rm -rf tmp-build
       - run: if [[ -n $BUILD_TYPE ]]; then bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build ; fi
-      - run: bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init $CIRCLE_PROJECT_REPONAME
       - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
