@@ -1,5 +1,79 @@
 version: 2.1
+
+orbs:
+  # shellcheck: circleci/shellcheck@2.2.4
+  go: circleci/go@1.7.0
+
+# Test resource classes
+executors:
+  linux:
+    docker:
+      - image: cimg/go:1.16
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
+    resource_class: large
+  osx:
+    macos:      
+      xcode: 12.5.1
+      resource_class: large
+  windows:
+    machine:
+      image: "windows-server-2019-vs2019:stable"
+      # Verify docs for Windows resource_class
+      resource_class: windows.large
+      shell: bash -eo pipefail
+
 jobs:
+  build-static:
+    parameters:
+      platform:
+        description: The target for the build. Must be one of "linux", "osx", or "windows".
+        type: enum
+        enum: ["linux", "osx", "windows"]
+        default: "linux"
+    executor: << parameters.platform >>
+    environment:
+      EXPECT_LINK_INFO: static
+    steps:
+      - checkout
+      # Add orb support for Windows go/install
+      - unless:
+          condition:
+            equal: [ << parameters.platform >>, "windows" ]
+          steps:
+            - go/install:
+                version: "1.16"
+      # Using default go version 1.17 on Windows
+      - run: go version
+      - run: 
+          name: Set up build environment
+          command: |
+            case << parameters.platform >> in
+              osx)
+                brew install librdkafka
+                echo "export PATH=$PATH:/Users/distiller/go/bin" >> $BASH_ENV
+                ;;
+              linux)
+                sudo apt-get update -q
+                sudo apt-get install librdkafka-dev
+                ;;
+              windows)
+                ./mk/setup-msys2-mingw64.sh
+                echo "export PATH='/C/tools/msys64/mingw64/bin:/C/Users/circleci/go/bin:$PATH'" >> $BASH_ENV
+                ;;
+            esac
+      - run: rm -rf tmp-build
+      - run: if [[ -n $BUILD_TYPE ]]; then bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build ; fi
+      - run: go get -u golang.org/x/lint/golint && touch .do_lint
+      - run: go mod init github.com/confluentinc/confluent-kafka-go
+      - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
+      - run: for dir in kafka examples ; do (cd $dir && go install $BUILD_TYPE ./...) ; done
+      - run: if [[ -f .do_lint ]]; then golint -set_exit_status ./examples/... ./kafka/... ./kafkatest/... ./soaktest/... ; fi
+      - run: for dir in kafka ; do (cd $dir && go test -timeout 180s -v $BUILD_TYPE ./...) ; done
+      - run: go-kafkacat --help
+      - run: library-version
+      - run: (library-version | grep "$EXPECT_LINK_INFO") || (echo "Incorrect linkage, expected $EXPECT_LINK_INFO" ; false)
   linux-build-dynamic:
     docker:
       - image: cimg/go:1.16
@@ -13,7 +87,6 @@ jobs:
       LD_LIBRARY_PATH: /home/circleci/project/tmp-build/lib
       DYLD_LIBRARY_PATH: /home/circleci/project/tmp-build/lib
       LIBRDKAFKA_VERSION: master
-
     steps:
       - checkout
       - run: go version
@@ -23,7 +96,7 @@ jobs:
       - run: if [[ -n $BUILD_TYPE ]]; then bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build ; fi
       - run: bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
-      - run: go mod init $CIRCLE_PROJECT_REPONAME
+      - run: go mod init github.com/confluentinc/confluent-kafka-go
       - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
       - run: for dir in kafka examples ; do (cd $dir && go install $BUILD_TYPE ./...) ; done
       - run: if [[ -f .do_lint ]]; then golint -set_exit_status ./examples/... ./kafka/... ./kafkatest/... ./soaktest/... ; fi
@@ -35,4 +108,9 @@ jobs:
 workflows:
   build-and-test:
     jobs:
+      # - shellcheck/check
       - linux-build-dynamic
+      - build-static:
+          matrix:
+            parameters:
+              platform: ["linux", "osx", "windows"]
