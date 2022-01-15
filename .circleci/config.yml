@@ -19,7 +19,8 @@ executors:
   windows:
     machine:
       image: "windows-server-2019-vs2019:stable"
-      resource_class: xlarge
+      # Verify docs for Windows resource_class
+      resource_class: windows.xlarge
       shell: bash -eo pipefail
 
 jobs:
