@@ -58,8 +58,7 @@ jobs:
               windows)
                 ./mk/setup-msys2-mingw64.sh
                 # echo "export MAKE=mingw32-make" >> $BASH_ENV  # so that Autotools can find it
-                echo "export PATH='/C/tools/msys64/mingw64/bin:$PATH'" >> $BASH_ENV
-                echo "export PATH='/C/Users/circleci/go/bin:$PATH'" >> $BASH_ENV
+                echo "export PATH='/C/tools/msys64/mingw64/bin:/C/Users/circleci/go/bin:$PATH'" >> $BASH_ENV
                 ;;
             esac
       - run: rm -rf tmp-build
