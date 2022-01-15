@@ -4,6 +4,7 @@ orbs:
   # shellcheck: circleci/shellcheck@2.2.4
   go: circleci/go@1.7.0
 
+# Test resource classes
 executors:
   linux:
     docker:
@@ -20,7 +21,7 @@ executors:
     machine:
       image: "windows-server-2019-vs2019:stable"
       # Verify docs for Windows resource_class
-      resource_class: windows.xlarge
+      resource_class: windows.large
       shell: bash -eo pipefail
 
 jobs:
@@ -59,7 +60,6 @@ jobs:
                 ;;
               windows)
                 ./mk/setup-msys2-mingw64.sh
-                # echo "export MAKE=mingw32-make" >> $BASH_ENV  # so that Autotools can find it
                 echo "export PATH='/C/tools/msys64/mingw64/bin:/C/Users/circleci/go/bin:$PATH'" >> $BASH_ENV
                 ;;
             esac
