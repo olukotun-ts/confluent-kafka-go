@@ -11,14 +11,15 @@ executors:
         auth:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD
+      resource_class: large
   osx:
     macos:      
       xcode: 12.5.1
-      resource_class: macos.x86.medium.gen2
+      resource_class: large
   windows:
     machine:
       image: "windows-server-2019-vs2019:stable"
-      resource_class: windows.large
+      resource_class: xlarge
       shell: bash -eo pipefail
 
 jobs:
