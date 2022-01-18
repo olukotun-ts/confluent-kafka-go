@@ -98,9 +98,6 @@ jobs:
     environment:
       EXPECT_LINK_INFO: dynamic
       BUILD_TYPE: -tags dynamic
-      PKG_CONFIG_PATH: $HOME/project/tmp-build/lib/pkgconfig
-      LD_LIBRARY_PATH: $HOME/project/tmp-build/lib
-      DYLD_LIBRARY_PATH: $HOME/project/tmp-build/lib
       LIBRDKAFKA_VERSION: master
     steps:
       - checkout
@@ -120,14 +117,16 @@ jobs:
               osx)
                 brew install librdkafka
                 echo "export PATH=$PATH:/Users/distiller/go/bin" >> $BASH_ENV
+                echo "export PKG_CONFIG_PATH=/Users/distiller/project/tmp-build/lib/pkgconfig" >> $BASH_ENV
+                echo "export LD_LIBRARY_PATH=/Users/distiller/project/tmp-build/lib" >> $BASH_ENV
+                echo "export DYLD_LIBRARY_PATH=/Users/distiller/project/tmp-build/lib" >> $BASH_ENV
                 ;;
               linux)
                 sudo apt-get update -q
                 sudo apt-get install librdkafka-dev
-                ;;
-              windows)
-                ./mk/setup-msys2-mingw64.sh
-                echo "export PATH='/C/tools/msys64/mingw64/bin:/C/Users/circleci/go/bin:$PATH'" >> $BASH_ENV
+                echo "export PKG_CONFIG_PATH=/home/circleci/project/tmp-build/lib/pkgconfig" >> $BASH_ENV
+                echo "export LD_LIBRARY_PATH=/home/circleci/project/tmp-build/lib" >> $BASH_ENV
+                echo "export DYLD_LIBRARY_PATH=/home/circleci/project/tmp-build/lib" >> $BASH_ENV
                 ;;
             esac
       - run: rm -rf tmp-build
