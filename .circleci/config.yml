@@ -115,10 +115,12 @@ jobs:
       # Using default go version 1.17 on Windows
       - run: go version
       - run: 
-          name: Update PATH for openssl on mac
+          name: Set up environment for mac
           command: |
             if [[ "$(uname -s)" == Darwin ]]; then
-              echo 'export PATH="/usr/local/opt/openssl/bin:$PATH"' >> $BASH_ENV
+              echo 'export PATH="/Users/distiller/go/bin:/usr/local/opt/openssl/bin:$PATH"' >> $BASH_ENV
+              brew update
+              brew install pkg-config
             fi
       - run: if [[ -n $BUILD_TYPE ]]; then sudo bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} /usr/local ; fi
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
