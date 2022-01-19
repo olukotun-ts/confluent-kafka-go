@@ -22,7 +22,7 @@ if [[ $PREFIXDIR != /* ]]; then
     PREFIXDIR="$PWD/$PREFIXDIR"
 fi
 
-mkdir -p "$PREFIXDIR/librdkafka"
+sudo mkdir -p "$PREFIXDIR/librdkafka"
 pushd "$PREFIXDIR/librdkafka"
 
 test -f configure ||
