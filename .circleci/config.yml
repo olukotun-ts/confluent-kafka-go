@@ -99,6 +99,10 @@ jobs:
       EXPECT_LINK_INFO: dynamic
       BUILD_TYPE: -tags dynamic
       LIBRDKAFKA_VERSION: master
+      PKG_CONFIG_PATH: /Users/distiller/project/tmp-build/lib/pkgconfig
+      LD_LIBRARY_PATH: /Users/distiller/project/tmp-build/lib
+      DYLD_LIBRARY_PATH: /Users/distiller/project/tmp-build/lib
+                
     steps:
       - checkout
       # Add orb support for Windows go/install
@@ -120,6 +124,7 @@ jobs:
                 echo "export PKG_CONFIG_PATH=/Users/distiller/project/tmp-build/lib/pkgconfig" >> $BASH_ENV
                 echo "export LD_LIBRARY_PATH=/Users/distiller/project/tmp-build/lib" >> $BASH_ENV
                 echo "export DYLD_LIBRARY_PATH=/Users/distiller/project/tmp-build/lib" >> $BASH_ENV
+                # Add path to header file with EVP_EncodeBlock declaration /usr/local/opt/node@14/include/node/openssl/evp.h
                 ;;
               linux)
                 sudo apt-get update -q
