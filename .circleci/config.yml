@@ -131,8 +131,8 @@ jobs:
                 sudo apt-get update -q
                 sudo apt-get install librdkafka-dev
                 # echo "export PKG_CONFIG_PATH=/home/circleci/project/tmp-build/lib/pkgconfig" >> $BASH_ENV
-                # echo "export LD_LIBRARY_PATH=/home/circleci/project/tmp-build/lib" >> $BASH_ENV
-                # echo "export DYLD_LIBRARY_PATH=/home/circleci/project/tmp-build/lib" >> $BASH_ENV
+                echo "export LD_LIBRARY_PATH=/home/circleci/project/tmp-build/lib" >> $BASH_ENV
+                echo "export DYLD_LIBRARY_PATH=/home/circleci/project/tmp-build/lib" >> $BASH_ENV
                 ;;
             esac
       - run: rm -rf tmp-build
