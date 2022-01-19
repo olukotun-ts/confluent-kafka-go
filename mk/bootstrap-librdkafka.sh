@@ -31,7 +31,7 @@ curl -sL "https://github.com/edenhill/librdkafka/archive/${VERSION}.tar.gz" | \
 
 if [[ "$(uname -s)" == Darwin ]]; then
     export PATH="/usr/local/opt/openssl/bin:$PATH"
-    echo $PATH >> $BASH_ENV
+    echo "$PATH" >> $BASH_ENV
     ./configure --prefix="$PREFIXDIR" \
         --CPPFLAGS="-I/usr/local/opt/openssl/include" \
         --LDFLAGS="-L/usr/local/opt/openssl/lib"
