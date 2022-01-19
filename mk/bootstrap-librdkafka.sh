@@ -29,7 +29,14 @@ test -f configure ||
 curl -sL "https://github.com/edenhill/librdkafka/archive/${VERSION}.tar.gz" | \
     tar -xz --strip-components=1 -f -
 
-./configure --prefix="$PREFIXDIR"
+if [[ "$(uname -s)" == Darwin ]]; then
+    ./configure --prefix="$PREFIXDIR" \
+        --CPPFLAGS="-I/usr/local/opt/openssl/include" \
+        --LDFLAGS="-L/usr/local/opt/openssl/lib"
+else
+    ./configure --prefix="$PREFIXDIR"
+fi
+
 make -j
 make install
 popd

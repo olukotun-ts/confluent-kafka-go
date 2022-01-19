@@ -1,5 +1,18 @@
 version: 2.1
 
+workflows:
+  build-and-test:
+    jobs:
+      # - shellcheck/check
+      - build-static:
+          matrix:
+            parameters:
+              platform: ["linux", "osx", "windows"]
+      - build-dynamic:
+          matrix:
+            parameters:
+              platform: ["linux", "osx"]
+
 orbs:
   # shellcheck: circleci/shellcheck@2.2.4
   go: circleci/go@1.7.0
@@ -16,7 +29,7 @@ executors:
   osx:
     macos:      
       xcode: 12.5.1
-      resource_class: large
+      resource_class: macos.x86.medium.gen2
   windows:
     machine:
       image: "windows-server-2019-vs2019:stable"
@@ -74,27 +87,43 @@ jobs:
       - run: go-kafkacat --help
       - run: library-version
       - run: (library-version | grep "$EXPECT_LINK_INFO") || (echo "Incorrect linkage, expected $EXPECT_LINK_INFO" ; false)
-  linux-build-dynamic:
-    docker:
-      - image: cimg/go:1.16
-        auth:
-          username: $DOCKER_USERNAME
-          password: $DOCKER_PASSWORD
+  build-dynamic:
+    parameters:
+      platform:
+        description: The target for the build. Must be one of "linux", or "osx".
+        type: enum
+        enum: ["linux", "osx"]
+        default: "linux"
+    executor: << parameters.platform >>
     environment:
       EXPECT_LINK_INFO: dynamic
       BUILD_TYPE: -tags dynamic
-      PKG_CONFIG_PATH: /home/circleci/project/tmp-build/lib/pkgconfig
-      LD_LIBRARY_PATH: /home/circleci/project/tmp-build/lib
-      DYLD_LIBRARY_PATH: /home/circleci/project/tmp-build/lib
       LIBRDKAFKA_VERSION: master
+      PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
+      LD_LIBRARY_PATH: /usr/local/lib
+      DYLD_LIBRARY_PATH: /usr/local/lib
+
     steps:
       - checkout
+      # Add orb support for Windows go/install
+      - unless:
+          condition:
+            equal: [ << parameters.platform >>, "windows" ]
+          steps:
+            - go/install:
+                version: "1.16"
+      # Using default go version 1.17 on Windows
       - run: go version
-      - run: sudo apt-get update -q
-      - run: sudo apt-get install librdkafka-dev
-      - run: rm -rf tmp-build
-      - run: if [[ -n $BUILD_TYPE ]]; then bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build ; fi
-      - run: bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build
+      - run: 
+          name: Set up environment for mac
+          command: |
+            if [[ "$(uname -s)" == Darwin ]]; then
+              echo 'export PATH="/Users/distiller/go/bin:/usr/local/opt/openssl/bin:$PATH"' >> $BASH_ENV
+              echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl/lib/pkgconfig"' >> $BASH_ENV
+              brew update
+              brew install pkg-config
+            fi
+      - run: if [[ -n $BUILD_TYPE ]]; then sudo bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} /usr/local ; fi
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
       - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
@@ -104,13 +133,4 @@ jobs:
       - run: go-kafkacat --help
       - run: library-version
       - run: (library-version | grep "$EXPECT_LINK_INFO") || (echo "Incorrect linkage, expected $EXPECT_LINK_INFO" ; false)
-
-workflows:
-  build-and-test:
-    jobs:
-      # - shellcheck/check
-      - linux-build-dynamic
-      - build-static:
-          matrix:
-            parameters:
-              platform: ["linux", "osx", "windows"]
+  
