@@ -114,19 +114,6 @@ jobs:
                 version: "1.16"
       # Using default go version 1.17 on Windows
       - run: go version
-      # - run: 
-      #     name: Set up build environment
-      #     command: |
-      #       case << parameters.platform >> in
-      #         osx)
-      #           brew install librdkafka
-      #           ln -s /usr/local/Cellar/openssl\@1.1/1.1.1m/include/openssl/ /usr/local/include/
-      #           ;;
-      #         linux)
-      #           sudo apt-get update -q
-      #           sudo apt-get install librdkafka-dev
-      #           ;;
-      #       esac
       - run: if [[ -n $BUILD_TYPE ]]; then sudo bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} /usr/local ; fi
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
