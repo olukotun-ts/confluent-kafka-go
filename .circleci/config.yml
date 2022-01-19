@@ -121,7 +121,6 @@ jobs:
             case << parameters.platform >> in
               osx)
                 brew install librdkafka
-                echo "export PATH=$PATH:/Users/distiller/go/bin" >> $BASH_ENV
                 # echo "export PKG_CONFIG_PATH=/Users/distiller/project/tmp-build/lib/pkgconfig" >> $BASH_ENV
                 # echo "export LD_LIBRARY_PATH=/Users/distiller/project/tmp-build/lib" >> $BASH_ENV
                 # echo "export DYLD_LIBRARY_PATH=/Users/distiller/project/tmp-build/lib" >> $BASH_ENV
