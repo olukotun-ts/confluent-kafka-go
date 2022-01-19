@@ -99,7 +99,7 @@ jobs:
       EXPECT_LINK_INFO: dynamic
       BUILD_TYPE: -tags dynamic
       LIBRDKAFKA_VERSION: master
-      # PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
+      PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
       # LD_LIBRARY_PATH: /Users/distiller/project/tmp-build/lib
       # DYLD_LIBRARY_PATH: /Users/distiller/project/tmp-build/lib
                 
@@ -130,7 +130,7 @@ jobs:
               linux)
                 sudo apt-get update -q
                 sudo apt-get install librdkafka-dev
-                # echo "export PKG_CONFIG_PATH=/home/circleci/project/tmp-build/lib/pkgconfig" >> $BASH_ENV
+                echo "export PKG_CONFIG_PATH=/home/circleci/project/tmp-build/lib/pkgconfig" >> $BASH_ENV
                 echo "export LD_LIBRARY_PATH=/home/circleci/project/tmp-build/lib" >> $BASH_ENV
                 echo "export DYLD_LIBRARY_PATH=/home/circleci/project/tmp-build/lib" >> $BASH_ENV
                 ;;
