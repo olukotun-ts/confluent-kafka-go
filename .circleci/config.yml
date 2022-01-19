@@ -100,9 +100,9 @@ jobs:
       BUILD_TYPE: -tags dynamic
       LIBRDKAFKA_VERSION: master
       PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
-      # LD_LIBRARY_PATH: /Users/distiller/project/tmp-build/lib
-      # DYLD_LIBRARY_PATH: /Users/distiller/project/tmp-build/lib
-                
+      LD_LIBRARY_PATH: /usr/local/lib
+      DYLD_LIBRARY_PATH: /usr/local/lib
+
     steps:
       - checkout
       # Add orb support for Windows go/install
@@ -117,25 +117,16 @@ jobs:
       - run: 
           name: Set up build environment
           command: |
-            # On mac, unlike Linux, pkgconfig resides at /usr/local/lib/pkgconfig, ignoring PKG_CONFIG_PATH var
             case << parameters.platform >> in
               osx)
                 brew install librdkafka
-                # echo "export PKG_CONFIG_PATH=/Users/distiller/project/tmp-build/lib/pkgconfig" >> $BASH_ENV
-                # echo "export LD_LIBRARY_PATH=/Users/distiller/project/tmp-build/lib" >> $BASH_ENV
-                # echo "export DYLD_LIBRARY_PATH=/Users/distiller/project/tmp-build/lib" >> $BASH_ENV
-                # Add path to header file with EVP_EncodeBlock declaration /usr/local/opt/node@14/include/node/openssl/evp.h
                 ;;
               linux)
                 sudo apt-get update -q
                 sudo apt-get install librdkafka-dev
-                echo "export PKG_CONFIG_PATH=/home/circleci/project/tmp-build/lib/pkgconfig" >> $BASH_ENV
-                echo "export LD_LIBRARY_PATH=/home/circleci/project/tmp-build/lib" >> $BASH_ENV
-                echo "export DYLD_LIBRARY_PATH=/home/circleci/project/tmp-build/lib" >> $BASH_ENV
                 ;;
             esac
-      - run: rm -rf tmp-build
-      - run: if [[ -n $BUILD_TYPE ]]; then bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build ; fi
+      - run: if [[ -n $BUILD_TYPE ]]; then bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} /usr/local ; fi
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
       - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
