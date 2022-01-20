@@ -74,7 +74,6 @@ jobs:
                     go_path=${bin_path%/*/*}
                     rm -rf "$go_path"
                   fi
-            - run: go version
             # - run:
             #     name: Uninstall Go
             #     shell: powershell.exe
