@@ -75,11 +75,16 @@ jobs:
             #         rm -rf "$go_path"
             #       fi
             - run:
+                name: Install msys2
+                command: |
+                  ./mk/setup-msys2-mingw64.sh
+                  echo "export PATH='/C/tools/msys64/mingw64/bin:$PATH'" >> $BASH_ENV
+            - run:
                 name: Install Go for Windows
                 # Remove ignored dirs
                 command: |
-                  tmp_PATH=$PATH
-                  choco install mingw
+                  # tmp_PATH=$PATH
+                  # choco install mingw
                   git clone https://go.googlesource.com/go
                   cd go
                   git checkout go1.16
@@ -87,7 +92,7 @@ jobs:
                   go_path=$(which go)
                   export GOROOT_BOOTSTRAP="${go_path%/*/*}"
                   ./make.bat
-                  echo "export PATH='/c/users/circleci/project/go/bin:$tmp_PATH'" >> $BASH_ENV
+                  echo "export PATH='/c/users/circleci/project/go/bin:$PATH'" >> $BASH_ENV
                   rm -rf "$GOROOT_BOOTSTRAP"
       - run: go version
       - run: 
@@ -102,10 +107,10 @@ jobs:
                 sudo apt-get update -q
                 sudo apt-get install librdkafka-dev
                 ;;
-              windows)
-                ./mk/setup-msys2-mingw64.sh
-                echo "export PATH='/C/tools/msys64/mingw64/bin:/C/Users/circleci/go/bin:$PATH'" >> $BASH_ENV
-                ;;
+              # windows)
+                # ./mk/setup-msys2-mingw64.sh
+                # echo "export PATH='/C/tools/msys64/mingw64/bin:/C/Users/circleci/go/bin:$PATH'" >> $BASH_ENV
+                # ;;
             esac
       - run: rm -rf tmp-build
       - run: if [[ -n $BUILD_TYPE ]]; then bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build ; fi
