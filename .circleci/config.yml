@@ -92,13 +92,13 @@ jobs:
           command: |
             case << parameters.platform >> in
               osx)
-                brew install librdkafka
+                # brew install librdkafka
                 echo "export PATH=$PATH:/Users/distiller/go/bin" >> $BASH_ENV
                 ;;
-              linux)
-                sudo apt-get update -q
-                sudo apt-get install librdkafka-dev
-                ;;
+              # linux)
+              #   sudo apt-get update -q
+              #   sudo apt-get install librdkafka-dev
+              #   ;;
               # windows)
                 # ./mk/setup-msys2-mingw64.sh
                 # echo "export PATH='/C/tools/msys64/mingw64/bin:/C/Users/circleci/go/bin:$PATH'" >> $BASH_ENV
