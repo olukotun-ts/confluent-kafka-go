@@ -19,6 +19,7 @@ workflows:
 orbs:
   # shellcheck: circleci/shellcheck@2.2.4
   go: circleci/go@1.7.0
+  windows: circleci/windows@2.4.1
   windetect:
     commands:
       init:
