@@ -22,9 +22,10 @@ orbs:
     commands:
       install:
         parameters:
-          version: Version of Go to install
-          type: string
-          default: "1.16"
+          version: 
+            description: Version of Go to install
+            type: string
+            default: "1.16"
         steps:
           - run:
               name: Install msys2
