@@ -7,9 +7,8 @@ set -e
 if [[ $(choco search --local-only mingw | grep "mingw") ]]
 then
     choco uninstall -y mingw
-else 
-    choco upgrade --no-progress -y msys2
 fi
+choco upgrade --no-progress -y msys2
 export msys2='cmd //C RefreshEnv.cmd '
 export msys2+='& set MSYS=winsymlinks:nativestrict '
 export msys2+='& C:\\tools\\msys64\\msys2_shell.cmd -defterm -no-start'
