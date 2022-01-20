@@ -4,20 +4,82 @@ workflows:
   build-and-test:
     jobs:
       # - shellcheck/check
-      - build-static:
-          matrix:
-            parameters:
-              go_version: ["1.16"]
-              platform: ["linux", "osx", "windows"]
-      - build-dynamic:
-          matrix:
-            parameters:
-              go_version: ["1.16"]
-              platform: ["linux", "osx"]
+      - test-windows
+      # - build-static:
+      #     matrix:
+      #       parameters:
+      #         go_version: ["1.16"]
+      #         platform: ["linux", "osx", "windows"]
+      # - build-dynamic:
+      #     matrix:
+      #       parameters:
+      #         go_version: ["1.16"]
+      #         platform: ["linux", "osx"]
 
 orbs:
   # shellcheck: circleci/shellcheck@2.2.4
   go: circleci/go@1.7.0
+  windetect:
+    commands:
+      init:
+          description: Run OS detection and initialize environment variables.
+          steps:
+              - run:
+                  command: |
+                      # Start with family detection.
+                      family=$(uname -s | tr '[:upper:]' '[:lower:]')
+                      case $family in
+                        linux)
+                          osID=$(grep -e "^ID=" /etc/os-release | cut -c4-)
+                          ;;
+                        darwin)
+                          osID=macos
+                          ;;
+                        msys*)
+                          osID=windows
+                          ;;
+                        *)
+                          echo "Unsupported operating system."
+                          exit 1
+                          ;;
+                      esac
+                      # Version number
+                      case $osID in
+                        ubuntu)
+                          osVersion=$(grep -e "^DISTRIB_RELEASE=" /etc/lsb-release | cut -c17-)
+                          ;;
+                        debian)
+                          osVersion=$(cat /etc/debian_version)
+                          ;;
+                        alpine)
+                          osVersion=$(cat /etc/alpine-release)
+                          ;;
+                        macos)
+                          osVersion=$(sw_vers -productVersion)
+                          ;;
+                        windows)
+                          osDetails=$(cmd /c ver)
+                          osVersion="${osDetails#*Version }" | cut -d']' -f 1
+                          ;;
+                        *)
+                          echo "Unsupported operating system ID."
+                          exit 1
+                          ;;
+                      esac
+                      # Determine if sudo is available and/or neccessary
+                      SUDO=""
+                      if [[ $EUID -ne 0 ]]; then
+                        SUDO=sudo
+                      fi
+                      command -v sudo >/dev/null 2>&1 || { SUDO=""; }
+                      # Export new variables.
+                      # This section can be replaced by the possible Bash/envar orb in
+                      # the future.
+                      echo "export OSD_FAMILY=$(echo $family)" >> $BASH_ENV
+                      echo "export OSD_ID=$(echo $osID)" >> $BASH_ENV
+                      echo "export OSD_VERSION=$(echo $osVersion)" >> $BASH_ENV
+                      echo "export SUDO=$(echo $SUDO)" >> $BASH_ENV
+                  name: Init OS Detection
   wingo:
     commands:
       install:
@@ -80,6 +142,15 @@ executors:
       shell: bash -eo pipefail
 
 jobs:
+  test-windows:
+    executor: windows/default
+    steps:
+      - windetect/init
+      - run: |
+          uname -s
+          echo "$OSD_FAMILY"
+          echo "$OSD_ID"
+          echo "$OSD_VERSION"
   build-static:
     parameters:
       go_version:
