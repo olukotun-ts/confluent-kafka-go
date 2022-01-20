@@ -92,7 +92,7 @@ jobs:
                   go_path=$(which go)
                   export GOROOT_BOOTSTRAP="${go_path%/*/*}"
                   ./make.bat
-                  echo "export PATH='/c/users/circleci/project/go/bin:$PATH'" >> $BASH_ENV
+                  echo "export PATH='/c/users/circleci/project/go/bin:/c/users/circleci/go/bin:$PATH'" >> $BASH_ENV
                   rm -rf "$GOROOT_BOOTSTRAP"
       - run: go version
       - run: 
