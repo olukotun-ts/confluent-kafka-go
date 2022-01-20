@@ -71,7 +71,7 @@ jobs:
                 name: Install msys2
                 command: |
                   ./mk/setup-msys2-mingw64.sh
-                  # echo "export PATH='/C/tools/msys64/mingw64/bin:$PATH'" >> $BASH_ENV
+                  echo "export PATH='/C/tools/msys64/mingw64/bin:$PATH'" >> $BASH_ENV
             - run:
                 name: Install Go for Windows
                 command: |
