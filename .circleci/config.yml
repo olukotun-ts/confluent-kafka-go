@@ -7,15 +7,13 @@ workflows:
       - build-static:
           matrix:
             parameters:
-              platform: ["windows"]
-      # - build-static:
-      #     matrix:
-      #       parameters:
-      #         platform: ["linux", "osx", "windows"]
-      # - build-dynamic:
-      #     matrix:
-      #       parameters:
-      #         platform: ["linux", "osx"]
+              go_version: ["1.16"]
+              platform: ["linux", "osx", "windows"]
+      - build-dynamic:
+          matrix:
+            parameters:
+              go_version: ["1.16"]
+              platform: ["linux", "osx"]
 
 orbs:
   # shellcheck: circleci/shellcheck@2.2.4
@@ -44,6 +42,10 @@ executors:
 jobs:
   build-static:
     parameters:
+      go_version:
+        description: Version of Go to use
+        type: string
+        default: "1.16"
       platform:
         description: The target for the build. Must be one of "linux", "osx", or "windows".
         type: enum
@@ -60,20 +62,11 @@ jobs:
             equal: [ << parameters.platform >>, "windows" ]
           steps:
             - go/install:
-                version: "1.16"
+                version: << parameters.go_version >>
       - when:
           condition:
             equal: [ << parameters.platform >>, "windows" ]
           steps:
-            # - run:
-            #     name: Delete system Go
-            #     command: |
-            #       bin_path=$(which go)
-            #       if [[ -n bin_path ]]; then
-            #         echo "Removing Go found at $bin_path"
-            #         go_path=${bin_path%/*/*}
-            #         rm -rf "$go_path"
-            #       fi
             - run:
                 name: Install msys2
                 command: |
@@ -81,13 +74,12 @@ jobs:
                   echo "export PATH='/C/tools/msys64/mingw64/bin:$PATH'" >> $BASH_ENV
             - run:
                 name: Install Go for Windows
-                # Remove ignored dirs
                 command: |
                   # tmp_PATH=$PATH
                   # choco install mingw
                   git clone https://go.googlesource.com/go
                   cd go
-                  git checkout go1.16
+                  git checkout go<< parameters.go_verson >>
                   cd src
                   go_path=$(which go)
                   export GOROOT_BOOTSTRAP="${go_path%/*/*}"
@@ -112,8 +104,6 @@ jobs:
                 # echo "export PATH='/C/tools/msys64/mingw64/bin:/C/Users/circleci/go/bin:$PATH'" >> $BASH_ENV
                 # ;;
             esac
-      - run: rm -rf tmp-build
-      - run: if [[ -n $BUILD_TYPE ]]; then bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build ; fi
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
       - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
@@ -125,6 +115,10 @@ jobs:
       - run: (library-version | grep "$EXPECT_LINK_INFO") || (echo "Incorrect linkage, expected $EXPECT_LINK_INFO" ; false)
   build-dynamic:
     parameters:
+      go_version:
+        description: Version of Go to use
+        type: string
+        default: "1.16"
       platform:
         description: The target for the build. Must be one of "linux", or "osx".
         type: enum
@@ -138,19 +132,13 @@ jobs:
       PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
       LD_LIBRARY_PATH: /usr/local/lib
       DYLD_LIBRARY_PATH: /usr/local/lib
-
     steps:
       - checkout
-      # Add orb support for Windows go/install
-      - unless:
-          condition:
-            equal: [ << parameters.platform >>, "windows" ]
-          steps:
-            - go/install:
-                version: "1.16"
-      # Using default go version 1.17 on Windows
+      - go/install:
+          version: << parameters.go_version >>
       - run: go version
       - run: 
+          # Use os detect orb
           name: Set up environment for mac
           command: |
             if [[ "$(uname -s)" == Darwin ]]; then
