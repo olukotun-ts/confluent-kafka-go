@@ -144,7 +144,9 @@ executors:
 
 jobs:
   test-windows:
-    executor: windows/default
+    executor:
+      name: windows/default
+      shell: bash -eo pipefail
     steps:
       - windetect/init
       - run: |
