@@ -76,7 +76,9 @@ jobs:
             #       fi
             - run:
                 name: Install Go for Windows
+                # Remove ignored dirs
                 command: |
+                  tmp_PATH=$PATH
                   choco install mingw
                   git clone https://go.googlesource.com/go
                   cd go
@@ -85,12 +87,8 @@ jobs:
                   go_path=$(which go)
                   export GOROOT_BOOTSTRAP="${go_path%/*/*}"
                   ./make.bat
-                  echo "export PATH='/c/users/circleci/project/go/bin:$PATH'" >> $BASH_ENV
+                  echo "export PATH='/c/users/circleci/project/go/bin:$tmp_PATH'" >> $BASH_ENV
                   rm -rf "$GOROOT_BOOTSTRAP"
-            # - run:
-            #     name: Uninstall Go
-            #     shell: powershell.exe
-            #     command: (gwmi Win32_Product | ? Name -like "Go Programming Language amd64 go*").uninstall()
       - run: go version
       - run: 
           name: Set up build environment
