@@ -18,6 +18,45 @@ workflows:
 orbs:
   # shellcheck: circleci/shellcheck@2.2.4
   go: circleci/go@1.7.0
+  wingo:
+    commands:
+      install:
+        parameters:
+          version: Version of Go to install
+          type: string
+          default: "1.16"
+        steps:
+          - run:
+              name: Install msys2
+              command: |
+                [[ ! -f C:/tools/msys64/msys2_shell.cmd ]] && rm -rf C:/tools/msys64
+                if [[ $(choco search --local-only mingw | grep "mingw") ]]
+                then
+                    choco uninstall -y mingw
+                fi
+                choco upgrade --no-progress -y msys2
+                export msys2='cmd //C RefreshEnv.cmd '
+                export msys2+='& set MSYS=winsymlinks:nativestrict '
+                export msys2+='& C:\\tools\\msys64\\msys2_shell.cmd -defterm -no-start'
+                export mingw64="$msys2 -mingw64 -full-path -here -c "\"\$@"\" --"
+                export msys2+=" -msys2 -c "\"\$@"\" --"
+                $msys2 pacman --sync --noconfirm --needed mingw-w64-x86_64-toolchain
+                echo "export PATH='/C/tools/msys64/mingw64/bin:$PATH'" >> $BASH_ENV
+          - run:
+              name: Install Go for Windows
+              command: |
+                git clone https://go.googlesource.com/go
+                cd go
+                git checkout go<< parameters.version >>
+                cd src
+                go_path=$(which go)
+                export GOROOT_BOOTSTRAP="${go_path%/*/*}"
+                ./make.bat
+                echo "export PATH='/c/users/circleci/project/go/bin:/c/users/circleci/go/bin:$PATH'" >> $BASH_ENV
+                rm -rf "$GOROOT_BOOTSTRAP"
+          - run:
+              name: Verify Go installation
+              command: echo "Installed " && go version
 
 # Test resource classes
 executors:
@@ -67,26 +106,8 @@ jobs:
           condition:
             equal: [ << parameters.platform >>, "windows" ]
           steps:
-            - run:
-                name: Install msys2
-                command: |
-                  ./mk/setup-msys2-mingw64.sh
-                  echo "export PATH='/C/tools/msys64/mingw64/bin:$PATH'" >> $BASH_ENV
-            - run:
-                name: Install Go for Windows
-                command: |
-                  # tmp_PATH=$PATH
-                  # choco install mingw
-                  git clone https://go.googlesource.com/go
-                  cd go
-                  git checkout go<< parameters.go_version >>
-                  cd src
-                  go_path=$(which go)
-                  export GOROOT_BOOTSTRAP="${go_path%/*/*}"
-                  ./make.bat
-                  echo "export PATH='/c/users/circleci/project/go/bin:/c/users/circleci/go/bin:$PATH'" >> $BASH_ENV
-                  rm -rf "$GOROOT_BOOTSTRAP"
-      - run: go version
+            - wingo/install:
+                version: << parameters.go_version >>
       - run: 
           # Use os detect orb
           name: Set up environment for mac
@@ -126,7 +147,6 @@ jobs:
       - checkout
       - go/install:
           version: << parameters.go_version >>
-      - run: go version
       - run: 
           # Use os detect orb
           name: Set up environment for mac
