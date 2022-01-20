@@ -87,23 +87,14 @@ jobs:
                   echo "export PATH='/c/users/circleci/project/go/bin:/c/users/circleci/go/bin:$PATH'" >> $BASH_ENV
                   rm -rf "$GOROOT_BOOTSTRAP"
       - run: go version
-      - run: 
-          name: Set up build environment
-          command: |
-            case << parameters.platform >> in
-              osx)
-                # brew install librdkafka
-                echo "export PATH=$PATH:/Users/distiller/go/bin" >> $BASH_ENV
-                ;;
-              # linux)
-              #   sudo apt-get update -q
-              #   sudo apt-get install librdkafka-dev
-              #   ;;
-              # windows)
-                # ./mk/setup-msys2-mingw64.sh
-                # echo "export PATH='/C/tools/msys64/mingw64/bin:/C/Users/circleci/go/bin:$PATH'" >> $BASH_ENV
-                # ;;
-            esac
+      # - run: 
+      #     name: Set up build environment
+      #     command: |
+      #       case << parameters.platform >> in
+      #         osx)
+      #           echo "export PATH=$PATH:/Users/distiller/go/bin" >> $BASH_ENV
+      #           ;;
+      #       esac
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
       - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
