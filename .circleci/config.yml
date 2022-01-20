@@ -65,26 +65,32 @@ jobs:
           condition:
             equal: [ << parameters.platform >>, "windows" ]
           steps:
+            # - run:
+            #     name: Delete system Go
+            #     command: |
+            #       bin_path=$(which go)
+            #       if [[ -n bin_path ]]; then
+            #         echo "Removing Go found at $bin_path"
+            #         go_path=${bin_path%/*/*}
+            #         rm -rf "$go_path"
+            #       fi
             - run:
-                name: Delete system Go
+                name: Install Go for Windows
                 command: |
-                  bin_path=$(which go)
-                  if [[ -n bin_path ]]; then
-                    echo "Removing Go found at $bin_path"
-                    go_path=${bin_path%/*/*}
-                    rm -rf "$go_path"
-                  fi
+                  choco install mingw
+                  git clone https://go.googlesource.com/go
+                  cd go
+                  git checkout go1.16
+                  cd src
+                  go_path=$(which go)
+                  export GOROOT_BOOTSTRAP="${go_path%/*/*}"
+                  ./make.bat
+                  echo "export PATH='/c/users/circleci/go/bin:$PATH'" >> $BASH_ENV
+                  rm -rf "$GOROOT_BOOTSTRAP"
             # - run:
             #     name: Uninstall Go
             #     shell: powershell.exe
             #     command: (gwmi Win32_Product | ? Name -like "Go Programming Language amd64 go*").uninstall()
-            - run:
-                name: Install Go for Windows
-                no_output_timeout: 20m
-                command: |
-                  curl -L https://go.dev/dl/go1.16.windows-amd64.msi -O
-                  msiexec /i "go1.16.windows-amd64.msi" /qn
-      # Using default go version 1.17 on Windows
       - run: go version
       - run: 
           name: Set up build environment
