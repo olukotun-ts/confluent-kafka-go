@@ -7,11 +7,15 @@ workflows:
       - build-static:
           matrix:
             parameters:
-              platform: ["linux", "osx", "windows"]
-      - build-dynamic:
-          matrix:
-            parameters:
-              platform: ["linux", "osx"]
+              platform: ["windows"]
+      # - build-static:
+      #     matrix:
+      #       parameters:
+      #         platform: ["linux", "osx", "windows"]
+      # - build-dynamic:
+      #     matrix:
+      #       parameters:
+      #         platform: ["linux", "osx"]
 
 orbs:
   # shellcheck: circleci/shellcheck@2.2.4
@@ -57,6 +61,20 @@ jobs:
           steps:
             - go/install:
                 version: "1.16"
+      - when:
+          condition:
+            equal: [ << parameters.platform >>, "windows" ]
+          steps:
+            - run:
+                name: Install Go for Windows
+                command: |
+                  wmic
+                  product get name
+                  product where "name like 'Go Programming Language amd64 go%%'" call uninstall /nointeractive
+                  quit
+
+                  curl -L https://go.dev/dl/go1.16.windows-amd64.msi -O
+                  msiexec /i "go1.16.windows-amd64.msi" /passive
       # Using default go version 1.17 on Windows
       - run: go version
       - run: 
