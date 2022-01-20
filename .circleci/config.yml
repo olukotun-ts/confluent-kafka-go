@@ -66,10 +66,12 @@ jobs:
             equal: [ << parameters.platform >>, "windows" ]
           steps:
             - run:
+                name: Uninstall Go
+                shell: powershell.exe
+                command: (gwmi Win32_Product | ? Name -like "Go Programming Language amd64 go*").uninstall()
+            - run:
                 name: Install Go for Windows
                 command: |
-                  wmic /INTERACTIVE:OFF product where "name like 'Go Programming Language amd64 go%%'" call uninstall /nointeractive
-
                   curl -L https://go.dev/dl/go1.16.windows-amd64.msi -O
                   msiexec /i "go1.16.windows-amd64.msi" /qn
       # Using default go version 1.17 on Windows
