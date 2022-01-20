@@ -66,11 +66,22 @@ jobs:
             equal: [ << parameters.platform >>, "windows" ]
           steps:
             - run:
-                name: Uninstall Go
-                shell: powershell.exe
-                command: (gwmi Win32_Product | ? Name -like "Go Programming Language amd64 go*").uninstall()
+                name: Delete system Go
+                command: |
+                bin_path=$(which go)
+                if [[ -n bin_path ]]; then
+                  echo "Removing Go found at $bin_path"
+                  go_path=${bin_path%/*/*}
+                  rm -rf "$go_path"
+                fi
+            - run: go version
+            # - run:
+            #     name: Uninstall Go
+            #     shell: powershell.exe
+            #     command: (gwmi Win32_Product | ? Name -like "Go Programming Language amd64 go*").uninstall()
             - run:
                 name: Install Go for Windows
+                no_output_timeout: 20m
                 command: |
                   curl -L https://go.dev/dl/go1.16.windows-amd64.msi -O
                   msiexec /i "go1.16.windows-amd64.msi" /qn
