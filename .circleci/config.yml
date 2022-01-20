@@ -79,7 +79,7 @@ jobs:
                   # choco install mingw
                   git clone https://go.googlesource.com/go
                   cd go
-                  git checkout go<< parameters.go_verson >>
+                  git checkout go<< parameters.go_version >>
                   cd src
                   go_path=$(which go)
                   export GOROOT_BOOTSTRAP="${go_path%/*/*}"
