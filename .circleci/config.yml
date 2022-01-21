@@ -59,11 +59,7 @@ orbs:
                           osVersion=$(sw_vers -productVersion)
                           ;;
                         windows)
-                          # osDetails=$(cmd /c ver)
-                          # osVersion=${osDetails#*Version } | cut -d']' -f 1
-                          osName=$(wmic os get caption)
-                          echo "osDetails: $osDetails"
-                          osVersion=$(wmic os get version)
+                          osVersion=$(powershell -Command "(Get-WmiObject Win32_OperatingSystem).Version")
                           echo "osVersion: $osVersion"
                           ;;
                         *)
