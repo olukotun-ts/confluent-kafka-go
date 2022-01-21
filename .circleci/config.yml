@@ -7,15 +7,57 @@ workflows:
       - build-static:
           matrix:
             parameters:
+              go_version: ["1.16"]
               platform: ["linux", "osx", "windows"]
       - build-dynamic:
           matrix:
             parameters:
+              go_version: ["1.16"]
               platform: ["linux", "osx"]
 
 orbs:
   # shellcheck: circleci/shellcheck@2.2.4
   go: circleci/go@1.7.0
+  wingo:
+    commands:
+      install:
+        parameters:
+          version: 
+            description: Version of Go to install
+            type: string
+            default: "1.16"
+        steps:
+          - run:
+              name: Install msys2
+              command: |
+                [[ ! -f C:/tools/msys64/msys2_shell.cmd ]] && rm -rf C:/tools/msys64
+                if [[ $(choco search --local-only mingw | grep "mingw") ]]
+                then
+                    choco uninstall -y mingw
+                fi
+                choco upgrade --no-progress -y msys2
+                export msys2='cmd //C RefreshEnv.cmd '
+                export msys2+='& set MSYS=winsymlinks:nativestrict '
+                export msys2+='& C:\\tools\\msys64\\msys2_shell.cmd -defterm -no-start'
+                export mingw64="$msys2 -mingw64 -full-path -here -c "\"\$@"\" --"
+                export msys2+=" -msys2 -c "\"\$@"\" --"
+                $msys2 pacman --sync --noconfirm --needed mingw-w64-x86_64-toolchain
+                echo "export PATH='/C/tools/msys64/mingw64/bin:$PATH'" >> $BASH_ENV
+          - run:
+              name: Install Go for Windows
+              command: |
+                git clone https://go.googlesource.com/go
+                cd go
+                git checkout go<< parameters.version >>
+                cd src
+                go_path=$(which go)
+                export GOROOT_BOOTSTRAP="${go_path%/*/*}"
+                ./make.bat
+                echo "export PATH='/c/users/circleci/project/go/bin:/c/users/circleci/go/bin:$PATH'" >> $BASH_ENV
+                rm -rf "$GOROOT_BOOTSTRAP"
+          - run:
+              name: Verify Go installation
+              command: echo "Installed " && go version
 
 # Test resource classes
 executors:
@@ -40,6 +82,10 @@ executors:
 jobs:
   build-static:
     parameters:
+      go_version:
+        description: Version of Go to use
+        type: string
+        default: "1.16"
       platform:
         description: The target for the build. Must be one of "linux", "osx", or "windows".
         type: enum
@@ -56,28 +102,21 @@ jobs:
             equal: [ << parameters.platform >>, "windows" ]
           steps:
             - go/install:
-                version: "1.16"
-      # Using default go version 1.17 on Windows
-      - run: go version
-      - run: 
-          name: Set up build environment
-          command: |
-            case << parameters.platform >> in
-              osx)
-                brew install librdkafka
-                echo "export PATH=$PATH:/Users/distiller/go/bin" >> $BASH_ENV
-                ;;
-              linux)
-                sudo apt-get update -q
-                sudo apt-get install librdkafka-dev
-                ;;
-              windows)
-                ./mk/setup-msys2-mingw64.sh
-                echo "export PATH='/C/tools/msys64/mingw64/bin:/C/Users/circleci/go/bin:$PATH'" >> $BASH_ENV
-                ;;
-            esac
-      - run: rm -rf tmp-build
-      - run: if [[ -n $BUILD_TYPE ]]; then bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} tmp-build ; fi
+                version: << parameters.go_version >>
+      - when:
+          condition:
+            equal: [ << parameters.platform >>, "windows" ]
+          steps:
+            - wingo/install:
+                version: << parameters.go_version >>
+      - when:
+          condition:
+            equal: [ << parameters.platform >>, "osx" ]
+          steps:
+            - run:
+                name: Set up environment for mac
+                command: |
+                  echo 'export PATH="/Users/distiller/go/bin:$PATH"' >> $BASH_ENV
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
       - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
@@ -89,6 +128,10 @@ jobs:
       - run: (library-version | grep "$EXPECT_LINK_INFO") || (echo "Incorrect linkage, expected $EXPECT_LINK_INFO" ; false)
   build-dynamic:
     parameters:
+      go_version:
+        description: Version of Go to use
+        type: string
+        default: "1.16"
       platform:
         description: The target for the build. Must be one of "linux", or "osx".
         type: enum
@@ -102,27 +145,21 @@ jobs:
       PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
       LD_LIBRARY_PATH: /usr/local/lib
       DYLD_LIBRARY_PATH: /usr/local/lib
-
     steps:
       - checkout
-      # Add orb support for Windows go/install
-      - unless:
+      - go/install:
+          version: << parameters.go_version >>
+      - when:
           condition:
-            equal: [ << parameters.platform >>, "windows" ]
+            equal: [ << parameters.platform >>, "osx" ]
           steps:
-            - go/install:
-                version: "1.16"
-      # Using default go version 1.17 on Windows
-      - run: go version
-      - run: 
-          name: Set up environment for mac
-          command: |
-            if [[ "$(uname -s)" == Darwin ]]; then
-              echo 'export PATH="/Users/distiller/go/bin:/usr/local/opt/openssl/bin:$PATH"' >> $BASH_ENV
-              echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl/lib/pkgconfig"' >> $BASH_ENV
-              brew update
-              brew install pkg-config
-            fi
+            - run:
+                name: Set up environment for mac
+                command: |
+                  echo 'export PATH="/Users/distiller/go/bin:/usr/local/opt/openssl/bin:$PATH"' >> $BASH_ENV
+                  echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl/lib/pkgconfig"' >> $BASH_ENV
+                  brew update
+                  brew install pkg-config
       - run: if [[ -n $BUILD_TYPE ]]; then sudo bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} /usr/local ; fi
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
