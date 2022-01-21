@@ -116,9 +116,7 @@ jobs:
             - run:
                 name: Set up environment for mac
                 command: |
-                  if [[ "$(uname -s)" == Darwin ]]; then
-                    echo 'export PATH="/Users/distiller/go/bin:$PATH"' >> $BASH_ENV
-                  fi
+                  echo 'export PATH="/Users/distiller/go/bin:$PATH"' >> $BASH_ENV
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
       - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
@@ -158,12 +156,10 @@ jobs:
             - run:
                 name: Set up environment for mac
                 command: |
-                  if [[ "$(uname -s)" == Darwin ]]; then
-                    echo 'export PATH="/Users/distiller/go/bin:/usr/local/opt/openssl/bin:$PATH"' >> $BASH_ENV
-                    echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl/lib/pkgconfig"' >> $BASH_ENV
-                    brew update
-                    brew install pkg-config
-                  fi
+                  echo 'export PATH="/Users/distiller/go/bin:/usr/local/opt/openssl/bin:$PATH"' >> $BASH_ENV
+                  echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl/lib/pkgconfig"' >> $BASH_ENV
+                  brew update
+                  brew install pkg-config
       - run: if [[ -n $BUILD_TYPE ]]; then sudo bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} /usr/local ; fi
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
