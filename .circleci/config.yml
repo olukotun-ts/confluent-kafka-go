@@ -4,22 +4,20 @@ workflows:
   build-and-test:
     jobs:
       # - shellcheck/check
-      - test-windows
-      # - build-static:
-      #     matrix:
-      #       parameters:
-      #         go_version: ["1.16"]
-      #         platform: ["linux", "osx", "windows"]
-      # - build-dynamic:
-      #     matrix:
-      #       parameters:
-      #         go_version: ["1.16"]
-      #         platform: ["linux", "osx"]
+      - build-static:
+          matrix:
+            parameters:
+              go_version: ["1.16"]
+              platform: ["linux", "osx", "windows"]
+      - build-dynamic:
+          matrix:
+            parameters:
+              go_version: ["1.16"]
+              platform: ["linux", "osx"]
 
 orbs:
   # shellcheck: circleci/shellcheck@2.2.4
   go: circleci/go@1.7.0
-  windows: circleci/windows@2.4.1
   windetect:
     commands:
       init:
@@ -61,7 +59,6 @@ orbs:
                           ;;
                         windows)
                           osVersion=$(powershell -Command "(Get-WmiObject Win32_OperatingSystem).Version")
-                          echo "osVersion: $osVersion"
                           ;;
                         *)
                           echo "Unsupported operating system ID."
@@ -144,17 +141,6 @@ executors:
       shell: bash -eo pipefail
 
 jobs:
-  test-windows:
-    executor:
-      name: windows/default
-      shell: bash -eo pipefail
-    steps:
-      - windetect/init
-      - run: |
-          uname -s
-          echo "OSD_FAMILY: $OSD_FAMILY"
-          echo "OSD_ID: $OSD_ID"
-          echo "OSD_VERSION: $OSD_VERSION"
   build-static:
     parameters:
       go_version:
@@ -184,13 +170,16 @@ jobs:
           steps:
             - wingo/install:
                 version: << parameters.go_version >>
-      - run: 
-          # Use os detect orb
-          name: Set up environment for mac
-          command: |
-            if [[ "$(uname -s)" == Darwin ]]; then
-              echo 'export PATH="/Users/distiller/go/bin:$PATH"' >> $BASH_ENV
-            fi
+      - when:
+          condition:
+            equal: [ << parameters.platform >>, "osx" ]
+          steps:
+            - run:
+                name: Set up environment for mac
+                command: |
+                  if [[ "$(uname -s)" == Darwin ]]; then
+                    echo 'export PATH="/Users/distiller/go/bin:$PATH"' >> $BASH_ENV
+                  fi
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
       - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
@@ -223,16 +212,19 @@ jobs:
       - checkout
       - go/install:
           version: << parameters.go_version >>
-      - run: 
-          # Use os detect orb
-          name: Set up environment for mac
-          command: |
-            if [[ "$(uname -s)" == Darwin ]]; then
-              echo 'export PATH="/Users/distiller/go/bin:/usr/local/opt/openssl/bin:$PATH"' >> $BASH_ENV
-              echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl/lib/pkgconfig"' >> $BASH_ENV
-              brew update
-              brew install pkg-config
-            fi
+      - when:
+          condition:
+            equal: [ << parameters.platform >>, "osx" ]
+          steps:
+            - run:
+                name: Set up environment for mac
+                command: |
+                  if [[ "$(uname -s)" == Darwin ]]; then
+                    echo 'export PATH="/Users/distiller/go/bin:/usr/local/opt/openssl/bin:$PATH"' >> $BASH_ENV
+                    echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl/lib/pkgconfig"' >> $BASH_ENV
+                    brew update
+                    brew install pkg-config
+                  fi
       - run: if [[ -n $BUILD_TYPE ]]; then sudo bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} /usr/local ; fi
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
