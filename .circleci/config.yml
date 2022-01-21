@@ -59,9 +59,11 @@ orbs:
                           osVersion=$(sw_vers -productVersion)
                           ;;
                         windows)
-                          osDetails=$(cmd /c ver)
+                          # osDetails=$(cmd /c ver)
+                          # osVersion=${osDetails#*Version } | cut -d']' -f 1
+                          osName=$(wmic os get caption)
                           echo "osDetails: $osDetails"
-                          osVersion=${osDetails#*Version } | cut -d']' -f 1
+                          osVersion=$(wmic os get version)
                           echo "osVersion: $osVersion"
                           ;;
                         *)
