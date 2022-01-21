@@ -60,7 +60,9 @@ orbs:
                           ;;
                         windows)
                           osDetails=$(cmd /c ver)
-                          osVersion="${osDetails#*Version }" | cut -d']' -f 1
+                          echo "osDetails: $osDetails"
+                          osVersion=${osDetails#*Version } | cut -d']' -f 1
+                          echo "osVersion: $osVersion"
                           ;;
                         *)
                           echo "Unsupported operating system ID."
@@ -151,9 +153,9 @@ jobs:
       - windetect/init
       - run: |
           uname -s
-          echo "$OSD_FAMILY"
-          echo "$OSD_ID"
-          echo "$OSD_VERSION"
+          echo "OSD_FAMILY: $OSD_FAMILY"
+          echo "OSD_ID: $OSD_ID"
+          echo "OSD_VERSION: $OSD_VERSION"
   build-static:
     parameters:
       go_version:
