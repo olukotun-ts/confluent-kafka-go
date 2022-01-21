@@ -37,6 +37,7 @@ orbs:
                           osID=macos
                           ;;
                         msys*)
+                          family=echo $family | cut -d'-' -f 1
                           osID=windows
                           ;;
                         *)
