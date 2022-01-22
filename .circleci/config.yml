@@ -115,7 +115,7 @@ orbs:
                         | sudo tar --no-same-owner --strip-components=1 --gunzip -x -C /usr/local/go/
 
                         echo "export PATH=$PATH:/usr/local/go/bin" >> $BASH_ENV
-                        $SUDO chown -R $(whoami): /usr/local/go
+                        $SUDO chown -R "$(whoami):" /usr/local/go
                     name: Install Go
                 - run:
                     command: echo "Installed " && go version
