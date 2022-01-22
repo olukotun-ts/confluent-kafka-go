@@ -13,7 +13,6 @@ workflows:
 orbs:
   # shellcheck: circleci/shellcheck@2.2.4
   go: circleci/go@1.7.0
-  os-detect: circleci/os-detect@0.3.0
   wingo:
     commands:
         # Verify check for "Binary already exists, skipping download."
@@ -34,7 +33,6 @@ orbs:
                     description: The Go version.
                     type: string
             steps:
-                - os-detect/init
                 - when:
                     condition:
                         equal:
