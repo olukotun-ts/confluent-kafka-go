@@ -58,6 +58,9 @@ orbs:
                           dstdir=/usr/local/
                           mkdir -p $dstdir
                           cd $dstdir
+
+                          echo "Downloading $srcfile to $dstdir"
+
                           curl --fail --location -sS "https://dl.google.com/go/$srcfile" -O
                           unzip $srcfile
                           echo "export PATH=/usr/local/go/bin:$PATH" >> $BASH_ENV
