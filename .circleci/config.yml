@@ -39,12 +39,12 @@ orbs:
                             - <<parameters.cache>>
                             - true
                     steps:
-                        - run:
-                            command: |
-                                $SUDO rm -rf /usr/local/go
-                                $SUDO mkdir -p /usr/local/go
-                                $SUDO chown -R $(whoami): /usr/local/go
-                            name: Prep cache restore
+                        # - run:
+                        #     command: |
+                        #         $SUDO rm -rf /usr/local/go
+                        #         $SUDO mkdir -p /usr/local/go
+                        #         $SUDO chown -R $(whoami): /usr/local/go
+                        #     name: Prep cache restore
                         - restore_cache:
                             keys:
                                 - go-binary-<<parameters.cache-key>>-<<parameters.version>>-{{ arch }}
