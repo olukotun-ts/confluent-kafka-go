@@ -1,3 +1,28 @@
+$env:PROCESSOR_ARCHITECTURE returns AMD64
+$env:OS returns Windows_NT
+
+OSD_FAMILY=$(echo $OS | tr '[:upper:]' '[:lower:]' | cut -d'_' -f 1)
+HOSTTYPE=$(echo $PROCESSOR_ARCHITECTURE | tr '[:upper:]' '[:lower:]')
+
+srcfile="go<<parameters.version>>${OSD_FAMILY}-${HOSTTYPE}.zip"
+dstdir=/usr/local/
+mkdir -p "$dstdir"
+cd "$dstdir"
+curl --fail --location -sS "https://dl.google.com/go/$srcfile" -O
+unzip $srcfile
+
+srcfile=go1.16.windows-amd64.zip
+jar -xv
+
+unzip -d /usr/local/go
+| sudo tar --no-same-owner --strip-components=1 --gunzip -x -C /usr/local/go/
+
+curl --fail --location -sS "https://dl.google.com/go/go<< parameters.version >>.${OSD_FAMILY}-${HOSTTYPE}.tar.gz" \
+| sudo tar --no-same-owner --strip-components=1 --gunzip -x -C /usr/local/go/
+
+echo "export PATH=$PATH:/usr/local/go/bin" >> $BASH_ENV
+$SUDO chown -R $(whoami): /usr/local/go
+# Test sourcing $BASH_ENV from Powershell
 version: 2.1
 
 workflows:
@@ -8,117 +33,203 @@ workflows:
           matrix:
             parameters:
               go_version: ["1.16"]
-              platform: ["linux", "osx", "windows"]
-      - build-dynamic:
-          matrix:
-            parameters:
-              go_version: ["1.16"]
-              platform: ["linux", "osx"]
+              platform: ["windows"]
 
 orbs:
   # shellcheck: circleci/shellcheck@2.2.4
   go: circleci/go@1.7.0
-  windetect:
-    commands:
-      init:
-          description: Run OS detection and initialize environment variables.
-          steps:
-              - run:
-                  command: |
-                      # Start with family detection.
-                      family=$(uname -s | tr '[:upper:]' '[:lower:]')
-                      case $family in
-                        linux)
-                          osID=$(grep -e "^ID=" /etc/os-release | cut -c4-)
-                          ;;
-                        darwin)
-                          osID=macos
-                          ;;
-                        msys*)
-                          family=$(echo $family | cut -d'-' -f 1)
-                          osID=windows
-                          ;;
-                        *)
-                          echo "Unsupported operating system."
-                          exit 1
-                          ;;
-                      esac
-                      # Version number
-                      case $osID in
-                        ubuntu)
-                          osVersion=$(grep -e "^DISTRIB_RELEASE=" /etc/lsb-release | cut -c17-)
-                          ;;
-                        debian)
-                          osVersion=$(cat /etc/debian_version)
-                          ;;
-                        alpine)
-                          osVersion=$(cat /etc/alpine-release)
-                          ;;
-                        macos)
-                          osVersion=$(sw_vers -productVersion)
-                          ;;
-                        windows)
-                          osVersion=$(powershell -Command "(Get-WmiObject Win32_OperatingSystem).Version")
-                          ;;
-                        *)
-                          echo "Unsupported operating system ID."
-                          exit 1
-                          ;;
-                      esac
-                      # Determine if sudo is available and/or neccessary
-                      SUDO=""
-                      if [[ $EUID -ne 0 ]]; then
-                        SUDO=sudo
-                      fi
-                      command -v sudo >/dev/null 2>&1 || { SUDO=""; }
-                      # Export new variables.
-                      # This section can be replaced by the possible Bash/envar orb in
-                      # the future.
-                      echo "export OSD_FAMILY=$(echo $family)" >> $BASH_ENV
-                      echo "export OSD_ID=$(echo $osID)" >> $BASH_ENV
-                      echo "export OSD_VERSION=$(echo $osVersion)" >> $BASH_ENV
-                      echo "export SUDO=$(echo $SUDO)" >> $BASH_ENV
-                  name: Init OS Detection
+  os-detect: circleci/os-detect@0.3.0
   wingo:
     commands:
-      install:
-        parameters:
-          version: 
-            description: Version of Go to install
-            type: string
-            default: "1.16"
-        steps:
-          - run:
-              name: Install msys2
-              command: |
-                [[ ! -f C:/tools/msys64/msys2_shell.cmd ]] && rm -rf C:/tools/msys64
-                if [[ $(choco search --local-only mingw | grep "mingw") ]]
-                then
-                    choco uninstall -y mingw
-                fi
-                choco upgrade --no-progress -y msys2
-                export msys2='cmd //C RefreshEnv.cmd '
-                export msys2+='& set MSYS=winsymlinks:nativestrict '
-                export msys2+='& C:\\tools\\msys64\\msys2_shell.cmd -defterm -no-start'
-                export mingw64="$msys2 -mingw64 -full-path -here -c "\"\$@"\" --"
-                export msys2+=" -msys2 -c "\"\$@"\" --"
-                $msys2 pacman --sync --noconfirm --needed mingw-w64-x86_64-toolchain
-                echo "export PATH='/C/tools/msys64/mingw64/bin:$PATH'" >> $BASH_ENV
-          - run:
-              name: Install Go for Windows
-              command: |
-                git clone https://go.googlesource.com/go
-                cd go
-                git checkout go<< parameters.version >>
-                cd src
-                go_path=$(which go)
-                export GOROOT_BOOTSTRAP="${go_path%/*/*}"
-                ./make.bat
-                echo "export PATH='/c/users/circleci/project/go/bin:/c/users/circleci/go/bin:$PATH'" >> $BASH_ENV
-                rm -rf "$GOROOT_BOOTSTRAP"
-          - run:
-              name: Verify Go installation
-              command: echo "Installed " && go version
+        # Verify check for "Binary already exists, skipping download."
+        install:
+            parameters:
+                cache:
+                    default: true
+                    description: Whether or not to cache the binary.
+                    type: boolean
+                cache-key:
+                    default: v2
+                    description: |
+                        String to use in cache key. Typically overriden when needed to bust cache.
+                    type: string
+                version:
+                    default: 1.16.5
+                    description: The Go version.
+                    type: string
+            steps:
+                - os-detect/init
+                - when:
+                    condition:
+                        equal:
+                            - <<parameters.cache>>
+                            - true
+                    steps:
+                        - run:
+                            command: |
+                                $SUDO rm -rf /usr/local/go
+                                $SUDO mkdir -p /usr/local/go
+                                $SUDO chown -R $(whoami): /usr/local/go
+                            name: Prep cache restore
+                        - restore_cache:
+                            keys:
+                                - go-binary-<<parameters.cache-key>>-<<parameters.version>>-{{ arch }}
+                - run:
+                    command: |
+                        if [[ -z "$OSD_FAMILY" ]]; then
+                          OSD_FAMILY=$(echo $OS | tr '[:upper:]' '[:lower:]' | cut -d'_' -f 1)
+                          HOSTTYPE=$(echo $PROCESSOR_ARCHITECTURE | tr '[:upper:]' '[:lower:]')
+
+                          srcfile="go<<parameters.version>>${OSD_FAMILY}-${HOSTTYPE}.zip"
+                          dstdir=/usr/local/
+                          mkdir -p $dstdir
+                          cd $dstdir
+                          curl --fail --location -sS "https://dl.google.com/go/$srcfile" -O
+                          unzip $srcfile
+                          echo "export PATH=/usr/local/go/bin:$PATH" >> $BASH_ENV
+                          exit 0
+                        fi
+
+                        : ${OSD_FAMILY:="linux"}
+                        : ${HOSTTYPE:="amd64"}
+                        if [ "${HOSTTYPE}" = "x86_64" ]; then HOSTTYPE="amd64"; fi
+                        case "${HOSTTYPE}" in *86 ) HOSTTYPE=i386 ;; esac
+
+                        if command -v go >/dev/null; then
+                          if go version | grep -q -F "go<< parameters.version >> "; then
+                            echo "Binary already exists, skipping download."
+                            exit 0
+                          fi
+
+                          echo "Found a different version of Go."
+                          OSD_FAMILY="$(go env GOHOSTOS)"
+                          HOSTTYPE="$(go env GOHOSTARCH)"
+
+                          $SUDO rm -rf /usr/local/go
+                          $SUDO install --owner=${USER} -d /usr/local/go
+                        fi
+
+                        echo "Installing the requested version of Go."
+
+                        curl --fail --location -sS "https://dl.google.com/go/go<< parameters.version >>.${OSD_FAMILY}-${HOSTTYPE}.tar.gz" \
+                        | sudo tar --no-same-owner --strip-components=1 --gunzip -x -C /usr/local/go/
+
+                        echo "export PATH=$PATH:/usr/local/go/bin" >> $BASH_ENV
+                        $SUDO chown -R $(whoami): /usr/local/go
+                    name: Install Go
+                - run:
+                    command: echo "Installed " && go version
+                    name: Verify Go Installation
+                - when:
+                    condition:
+                        equal:
+                            - <<parameters.cache>>
+                            - true
+                    steps:
+                        - save_cache:
+                            key: go-binary-<<parameters.cache-key>>-<<parameters.version>>-{{ arch }}
+                            paths:
+                                - /usr/local/go
+        load-cache:
+            description: Load cached Go modules.
+            parameters:
+                key:
+                    default: go-mod
+                    description: The cache key to use. The key is immutable.
+                    type: string
+            steps:
+                - restore_cache:
+                    keys:
+                        - << parameters.key >>-{{ arch }}-{{ checksum "go.sum"  }}
+        mod-download:
+            description: Run 'go mod download'.
+            steps:
+                - run:
+                    command: go mod download
+                    name: go mod download
+        mod-download-cached:
+            description: Download and cache Go modules
+            steps:
+                - load-cache
+                - mod-download
+                - save-cache
+        save-cache:
+            description: Save Go modules to cache.
+            parameters:
+                key:
+                    default: go-mod
+                    description: The cache key to use. The key is immutable.
+                    type: string
+                path:
+                    default: /home/circleci/go/pkg/mod
+                    description: Path to cache.
+                    type: string
+            steps:
+                - save_cache:
+                    key: << parameters.key >>-{{ arch }}-{{ checksum "go.sum"  }}
+                    paths:
+                        - << parameters.path >>
+        test:
+            description: |
+                Runs 'go test ./...' but includes extensive parameterization for finer tuning
+            parameters:
+                count:
+                    default: "1"
+                    description: run each test and benchmark n times
+                    type: string
+                covermode:
+                    default: set
+                    description: |
+                        flag to set the coverage mode
+                        (the go default is: "set", unless -race is enabled, in which case the go default is "atomic")
+                    enum:
+                        - set
+                        - count
+                        - atomic
+                    type: enum
+                coverpkg:
+                    default: ./...
+                    description: |
+                        Apply coverage analysis in each test to packages matching the patterns.
+                        (Sets -cover.)
+                    type: string
+                coverprofile:
+                    default: cover-source.out
+                    description: file to save coverage profile
+                    type: string
+                failfast:
+                    default: false
+                    description: do not start new tests after the first test failure
+                    type: boolean
+                packages:
+                    default: ./...
+                    description: Import tests to run, by path glob.
+                    type: string
+                parallel:
+                    default: "1"
+                    description: |
+                        Allow parallel execution of test functions that call t.Parallel.
+                        The value of this flag is the maximum number of tests to run
+                        simultaneously
+                    type: string
+                race:
+                    default: false
+                    description: |
+                        run tests with -race option
+                        (if enabled, update covermode to be "atomic")
+                    type: boolean
+                short:
+                    default: false
+                    description: tell long-running tests to shorten their run time
+                    type: boolean
+                verbose:
+                    default: false
+                    description: log all tests as they are run. Also print all text from Log and Logf calls even if the test succeeds.
+                    type: boolean
+            steps:
+                - run:
+                    command: go test <<# parameters.race >>-race<</ parameters.race >> -count=<<parameters.count>> -coverprofile=<<parameters.coverprofile>> <<# parameters.failfast >>-failfast<</ parameters.failfast >> <<# parameters.short >>-short<</ parameters.short >> -p <<parameters.parallel>> -covermode=<<parameters.covermode>> <<# parameters.verbose >>-v<</ parameters.verbose >> <<parameters.packages>> -coverpkg=<<parameters.coverpkg>>
+                    name: go test
 
 # Test resource classes
 executors:
