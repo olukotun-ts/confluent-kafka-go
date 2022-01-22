@@ -28,6 +28,10 @@ orbs:
                     description: |
                         String to use in cache key. Typically overriden when needed to bust cache.
                     type: string
+                compiler-src:
+                    default: msys2
+                    description: Package to install to provide gcc
+                    type: string
                 version:
                     default: 1.16.5
                     description: The Go version.
@@ -63,7 +67,27 @@ orbs:
 
                           curl --fail --location -sS "https://dl.google.com/go/$srcfile" -O
                           unzip $srcfile
-                          echo "export PATH=/usr/local/go/bin:$PATH" >> $BASH_ENV
+
+                          case << parameters.compiler_src >> in
+                            msys2)
+                              [[ ! -f C:/tools/msys64/msys2_shell.cmd ]] && rm -rf C:/tools/msys64
+                              if [[ $(choco search --local-only mingw | grep "mingw") ]]
+                              then
+                                  choco uninstall -y mingw
+                              fi
+                              choco upgrade --no-progress -y msys2
+                              export msys2='cmd //C RefreshEnv.cmd '
+                              export msys2+='& set MSYS=winsymlinks:nativestrict '
+                              export msys2+='& C:\\tools\\msys64\\msys2_shell.cmd -defterm -no-start'
+                              export mingw64="$msys2 -mingw64 -full-path -here -c "\"\$@"\" --"
+                              export msys2+=" -msys2 -c "\"\$@"\" --"
+                              $msys2 pacman --sync --noconfirm --needed mingw-w64-x86_64-toolchain
+                              compiler_path=/C/tools/msys64/mingw64/bin
+                              ;;
+                          esac
+
+                          echo "export PATH=$compiler_path:$dstdir/go/bin:$PATH" >> $BASH_ENV
+
                           exit 0
                         fi
 
