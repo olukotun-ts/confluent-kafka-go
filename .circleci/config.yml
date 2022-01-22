@@ -68,7 +68,7 @@ orbs:
                           curl --fail --location -sS "https://dl.google.com/go/$srcfile" -O
                           unzip $srcfile
 
-                          case << parameters.compiler_src >> in
+                          case << parameters.compiler-src >> in
                             msys2)
                               [[ ! -f C:/tools/msys64/msys2_shell.cmd ]] && rm -rf C:/tools/msys64
                               if [[ $(choco search --local-only mingw | grep "mingw") ]]
