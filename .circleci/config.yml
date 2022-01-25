@@ -4,16 +4,21 @@ workflows:
   build-and-test:
     jobs:
       # - shellcheck/check
+      # - build-static:
+      #     matrix:
+      #       parameters:
+      #         go_version: ["1.16"]
+      #         platform: ["linux", "osx", "windows"]
+      # - build-dynamic:
+      #     matrix:
+      #       parameters:
+      #         go_version: ["1.16"]
+              # platform: ["linux", "osx"]
       - build-static:
           matrix:
             parameters:
               go_version: ["1.16"]
-              platform: ["linux", "osx", "windows"]
-      - build-dynamic:
-          matrix:
-            parameters:
-              go_version: ["1.16"]
-              platform: ["linux", "osx"]
+              platform: ["osx"]
 
 orbs:
   # shellcheck: circleci/shellcheck@2.2.4
@@ -91,32 +96,33 @@ jobs:
         type: enum
         enum: ["linux", "osx", "windows"]
         default: "linux"
-    executor: << parameters.platform >>
+    machine: true
+    resource_class: sandboxi/runner0
     environment:
       EXPECT_LINK_INFO: static
     steps:
       - checkout
       # Add orb support for Windows go/install
-      - unless:
-          condition:
-            equal: [ << parameters.platform >>, "windows" ]
-          steps:
-            - go/install:
-                version: << parameters.go_version >>
-      - when:
-          condition:
-            equal: [ << parameters.platform >>, "windows" ]
-          steps:
-            - wingo/install:
-                version: << parameters.go_version >>
-      - when:
-          condition:
-            equal: [ << parameters.platform >>, "osx" ]
-          steps:
-            - run:
-                name: Set up environment for mac
-                command: |
-                  echo 'export PATH="/Users/distiller/go/bin:$PATH"' >> $BASH_ENV
+      # - unless:
+      #     condition:
+      #       equal: [ << parameters.platform >>, "windows" ]
+      #     steps:
+      #       - go/install:
+      #           version: << parameters.go_version >>
+      # - when:
+      #     condition:
+      #       equal: [ << parameters.platform >>, "windows" ]
+      #     steps:
+      #       - wingo/install:
+      #           version: << parameters.go_version >>
+      # - when:
+      #     condition:
+      #       equal: [ << parameters.platform >>, "osx" ]
+      #     steps:
+      #       - run:
+      #           name: Set up environment for mac
+      #           command: |
+      #             echo 'export PATH="/Users/distiller/go/bin:$PATH"' >> $BASH_ENV
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
       - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
