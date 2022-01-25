@@ -115,14 +115,14 @@ jobs:
       #     steps:
       #       - wingo/install:
       #           version: << parameters.go_version >>
-      # - when:
-      #     condition:
-      #       equal: [ << parameters.platform >>, "osx" ]
-      #     steps:
-      #       - run:
-      #           name: Set up environment for mac
-      #           command: |
-      #             echo 'export PATH="/Users/distiller/go/bin:$PATH"' >> $BASH_ENV
+      - when:
+          condition:
+            equal: [ << parameters.platform >>, "osx" ]
+          steps:
+            - run:
+                name: Set up environment for mac
+                command: |
+                  echo 'export PATH="/Users/olukotun-ts/go/bin:$PATH"' >> $BASH_ENV
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
       - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
