@@ -19,9 +19,12 @@ workflows:
             parameters:
               go_version: ["1.16", "1.17"]
               platform: ["linux"]
-      - check:
+      - check-cloud:
           requires:
             - build-static-1.16-linux
+      - check-runner:
+          requires:
+            - build-static-1.17-linux
 orbs:
   # shellcheck: circleci/shellcheck@2.2.4
   go: circleci/go@1.7.0
@@ -137,8 +140,15 @@ jobs:
       - persist_to_workspace:
           root: .
           paths: kafka*
-  check:
+  check-cloud:
+    docker: cimg/go
+    steps:
+      - attach_workspace:
+          at: tmp-space
+      - run: ls -al tmp-space
+  check-runner:
     machine: true
+    resource_class: runner0
     steps:
       - attach_workspace:
           at: tmp-space
