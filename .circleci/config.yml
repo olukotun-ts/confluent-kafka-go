@@ -142,7 +142,7 @@ jobs:
           paths: kafka*
   check-cloud:
     docker:
-      -image: cimg/go
+      - image: cimg/go
     steps:
       - attach_workspace:
           at: tmp-space
