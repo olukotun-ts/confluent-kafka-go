@@ -142,14 +142,14 @@ jobs:
           paths: kafka*
   check-cloud:
     docker:
-      - image: cimg/go
+      - image: cimg/go:1.17
     steps:
       - attach_workspace:
           at: tmp-space
       - run: ls -al tmp-space
   check-runner:
     machine: true
-    resource_class: runner0
+    resource_class: sandboxi/runner0
     steps:
       - attach_workspace:
           at: tmp-space
