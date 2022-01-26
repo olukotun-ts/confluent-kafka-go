@@ -104,12 +104,6 @@ executors:
       shell: bash -eo pipefail
 
 jobs:
-  provision-infra:
-    docker:
-      - image: cimg/base:stable
-    steps:
-
-
   build-static:
     parameters:
       go_version:
