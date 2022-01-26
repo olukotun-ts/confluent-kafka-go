@@ -5,5 +5,8 @@ tmp-build
 .DS_Store
 
 runner/
+**/.terraform/
+**/.terraform*
+**/*.tfstate
 
 **/*.env

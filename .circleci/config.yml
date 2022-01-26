@@ -14,7 +14,20 @@ workflows:
       #       parameters:
       #         go_version: ["1.16"]
               # platform: ["linux", "osx"]
+      - terraform/apply:
+          checkout: true
+          path: terraform/digitalocean
+          pre-steps:
+            - run:
+                name: Create .terraformrc file locally
+                command: >-
+                  echo "credentials \"app.terraform.io\" {token =
+                  \"$TERRAFORM_TOKEN\"}" > $HOME/.terraformrc
       - build-static:
+          post-steps:
+            - terraform/destroy:
+                checkout: true
+                path: terraform/digitalocean
           matrix:
             parameters:
               go_version: ["1.16", "1.17"]
@@ -22,12 +35,13 @@ workflows:
       - check-cloud:
           requires:
             - build-static-1.16-linux
-      - check-runner:
-          requires:
-            - build-static-1.17-linux
+      # - check-runner:
+      #     requires:
+      #       - build-static-1.17-linux
 orbs:
   # shellcheck: circleci/shellcheck@2.2.4
   go: circleci/go@1.7.0
+  terraform: circleci/terraform@3.0.0
   wingo:
     commands:
       install:
@@ -90,6 +104,12 @@ executors:
       shell: bash -eo pipefail
 
 jobs:
+  provision-infra:
+    docker:
+      - image: cimg/base:stable
+    steps:
+
+
   build-static:
     parameters:
       go_version:
