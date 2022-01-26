@@ -17,6 +17,7 @@ workflows:
       - terraform/apply:
           checkout: true
           path: terraform/digitalocean
+          workspace: do-runner
           pre-steps:
             - run:
                 name: Create .terraformrc file locally
@@ -26,8 +27,8 @@ workflows:
       - build-static:
           post-steps:
             - terraform/destroy:
-                checkout: true
                 path: terraform/digitalocean
+                workspace: do-runner
           matrix:
             parameters:
               go_version: ["1.16", "1.17"]
