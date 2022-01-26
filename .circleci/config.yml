@@ -129,7 +129,7 @@ jobs:
       - run: go mod init github.com/confluentinc/confluent-kafka-go
       # - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
       # - run: for dir in kafka examples ; do (cd $dir && go install $BUILD_TYPE ./...) ; done
-      - run: if [[ -f .do_lint ]]; then golint -set_exit_status ./examples/... ./kafka/... ./kafkatest/... ./soaktest/... ; fi
+      # - run: if [[ -f .do_lint ]]; then golint -set_exit_status ./examples/... ./kafka/... ./kafkatest/... ./soaktest/... ; fi
       # - run: for dir in kafka ; do (cd $dir && go test -timeout 180s -v $BUILD_TYPE ./...) ; done
       # - run: go-kafkacat --help
       # - run: library-version
