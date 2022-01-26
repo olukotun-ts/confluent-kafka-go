@@ -17,9 +17,11 @@ workflows:
       - build-static:
           matrix:
             parameters:
-              go_version: ["1.16"]
+              go_version: ["1.16", "1.17"]
               platform: ["linux"]
-
+      - check:
+          requires:
+            - build-static-1.16-linux
 orbs:
   # shellcheck: circleci/shellcheck@2.2.4
   go: circleci/go@1.7.0
@@ -125,13 +127,22 @@ jobs:
       #             echo 'export PATH="/Users/olukotun-ts/go/bin:$PATH"' >> $BASH_ENV
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
-      - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
-      - run: for dir in kafka examples ; do (cd $dir && go install $BUILD_TYPE ./...) ; done
+      # - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
+      # - run: for dir in kafka examples ; do (cd $dir && go install $BUILD_TYPE ./...) ; done
       - run: if [[ -f .do_lint ]]; then golint -set_exit_status ./examples/... ./kafka/... ./kafkatest/... ./soaktest/... ; fi
-      - run: for dir in kafka ; do (cd $dir && go test -timeout 180s -v $BUILD_TYPE ./...) ; done
-      - run: go-kafkacat --help
-      - run: library-version
-      - run: (library-version | grep "$EXPECT_LINK_INFO") || (echo "Incorrect linkage, expected $EXPECT_LINK_INFO" ; false)
+      # - run: for dir in kafka ; do (cd $dir && go test -timeout 180s -v $BUILD_TYPE ./...) ; done
+      # - run: go-kafkacat --help
+      # - run: library-version
+      # - run: (library-version | grep "$EXPECT_LINK_INFO") || (echo "Incorrect linkage, expected $EXPECT_LINK_INFO" ; false)
+      - persist_to_workspace:
+          root: .
+          paths: kafka*
+  check:
+    machine: true
+    steps:
+      - attach_workspace:
+          at: tmp-space
+      - run: ls -al tmp-space
   build-dynamic:
     parameters:
       go_version:
