@@ -15,6 +15,7 @@ workflows:
           requires:
             - build-static-1.16-linux
       - terraform/destroy:
+          checkout: true
           path: terraform/digitalocean
           requires:
             - build-static-1.16-linux
