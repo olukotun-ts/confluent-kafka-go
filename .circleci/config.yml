@@ -12,6 +12,11 @@ workflows:
           requires:
             - provision-runners
           post-steps:
+            - run:
+                name: Create .terraformrc file locally
+                command: >-
+                  echo "credentials \"app.terraform.io\" {token =
+                  \"$TERRAFORM_TOKEN\"}" > $HOME/.terraformrc
             - terraform/install
             - terraform/init:
                 path: terraform/digitalocean
@@ -39,9 +44,6 @@ jobs:
             \"$TERRAFORM_TOKEN\"}" > $HOME/.terraformrc
       - terraform/apply:
           path: terraform/digitalocean
-      - persist_to_workspace:
-          root: $HOME
-          paths: .terraformrc
   build-static:
     parameters:
       go_version:
@@ -63,8 +65,6 @@ jobs:
           version: << parameters.go_version >>
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
-      - attach_workspace:
-          at: $HOME
       - persist_to_workspace:
           root: .
           paths: kafka*
