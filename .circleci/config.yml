@@ -35,6 +35,8 @@ jobs:
     executor: terraform/default
     steps:
       - checkout
+      - add_ssh_keys:
+          fingerprints: 30:95:d7:ba:f9:0f:10:b2:6b:d9:67:8a:ef:81:a9:89
       - run:
           name: Create .terraformrc file locally
           command: >-
