@@ -3,12 +3,17 @@ version: 2.1
 workflows:
   build-and-test:
     jobs:
+      - provision-runners
       - build-static:
-          post-steps:
           matrix:
             parameters:
               go_version: ["1.16", "1.17"]
               platform: ["linux"]
+          requires:
+            - provision-runners
+          post-steps:
+            - terraform/destroy:
+                path: terraform/digitalocean
       - check-cloud:
           requires:
             - build-static-1.16-linux
@@ -30,7 +35,6 @@ jobs:
             echo "credentials \"app.terraform.io\" {token =
             \"$TERRAFORM_TOKEN\"}" > $HOME/.terraformrc
       - terraform/apply:
-          checkout: true
           path: terraform/digitalocean
       - persist_to_workspace:
           root: $HOME
@@ -61,10 +65,6 @@ jobs:
       - persist_to_workspace:
           root: .
           paths: kafka*
-      - terraform/destroy:
-          name: Tear down runners
-          when: always
-          path: terraform/digitalocean
   check-cloud:
     docker:
       - image: cimg/go:1.17
