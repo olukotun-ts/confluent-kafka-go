@@ -7,7 +7,7 @@ workflows:
       - build-static:
           matrix:
             parameters:
-              go_version: ["1.16", "1.17"]
+              go_version: ["1.16"]
               platform: ["linux"]
           requires:
             - provision-runners
@@ -17,6 +17,11 @@ workflows:
                 command: >-
                   echo "credentials \"app.terraform.io\" {token =
                   \"$TERRAFORM_TOKEN\"}" > $HOME/.terraformrc
+            - run:
+                name: Install unzip
+                command: |
+                  sudo apt-get update -y
+                  sudo apt-get install -y unzip
             - terraform/install
             - terraform/init:
                 path: terraform/digitalocean
@@ -68,6 +73,7 @@ jobs:
       - persist_to_workspace:
           root: .
           paths: kafka*
+      - run: exit 1
   check-cloud:
     docker:
       - image: cimg/go:1.17
