@@ -3,7 +3,8 @@ version: 2.1
 workflows:
   build-and-test:
     jobs:
-      - provision-runners
+      - provision-runners:
+          context: dockerhub
       - build-static:
           matrix:
             parameters:
@@ -26,6 +27,9 @@ jobs:
   provision-runners:
     docker:
       - image: terraform/default
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
     steps:
       - add_ssh_keys:
           fingerprints: 30:95:d7:ba:f9:0f:10:b2:6b:d9:67:8a:ef:81:a9:89
