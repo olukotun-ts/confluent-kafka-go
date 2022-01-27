@@ -11,23 +11,11 @@ workflows:
               platform: ["linux"]
           requires:
             - provision-runners
-          post-steps:
-            - run:
-                name: Create .terraformrc file locally
-                command: >-
-                  echo "credentials \"app.terraform.io\" {token =
-                  \"$TERRAFORM_TOKEN\"}" > $HOME/.terraformrc
-            - run:
-                name: Install unzip
-                command: |
-                  sudo apt-get update -y
-                  sudo apt-get install -y unzip
-            - terraform/install
-            - terraform/init:
-                path: terraform/digitalocean
-            - terraform/destroy:
-                path: terraform/digitalocean
       - check-cloud:
+          requires:
+            - build-static-1.16-linux
+      - terraform/destroy:
+          path: terraform/digitalocean
           requires:
             - build-static-1.16-linux
 
@@ -73,7 +61,6 @@ jobs:
       - persist_to_workspace:
           root: .
           paths: kafka*
-      - run: exit 1
   check-cloud:
     docker:
       - image: cimg/go:1.17
