@@ -3,30 +3,8 @@ version: 2.1
 workflows:
   build-and-test:
     jobs:
-      # - shellcheck/check
-      # - build-static:
-      #     matrix:
-      #       parameters:
-      #         go_version: ["1.16"]
-      #         platform: ["linux", "osx", "windows"]
-      # - build-dynamic:
-      #     matrix:
-      #       parameters:
-      #         go_version: ["1.16"]
-              # platform: ["linux", "osx"]
-      - terraform/apply:
-          checkout: true
-          path: terraform/digitalocean
-          pre-steps:
-            - run:
-                name: Create .terraformrc file locally
-                command: >-
-                  echo "credentials \"app.terraform.io\" {token =
-                  \"$TERRAFORM_TOKEN\"}" > $HOME/.terraformrc
       - build-static:
           post-steps:
-            - terraform/destroy:
-                path: terraform/digitalocean
           matrix:
             parameters:
               go_version: ["1.16", "1.17"]
@@ -34,75 +12,29 @@ workflows:
       - check-cloud:
           requires:
             - build-static-1.16-linux
-      # - check-runner:
-      #     requires:
-      #       - build-static-1.17-linux
+
 orbs:
-  # shellcheck: circleci/shellcheck@2.2.4
   go: circleci/go@1.7.0
   terraform: circleci/terraform@3.0.0
-  wingo:
-    commands:
-      install:
-        parameters:
-          version: 
-            description: Version of Go to install
-            type: string
-            default: "1.16"
-        steps:
-          - run:
-              name: Install msys2
-              command: |
-                [[ ! -f C:/tools/msys64/msys2_shell.cmd ]] && rm -rf C:/tools/msys64
-                if [[ $(choco search --local-only mingw | grep "mingw") ]]
-                then
-                    choco uninstall -y mingw
-                fi
-                choco upgrade --no-progress -y msys2
-                export msys2='cmd //C RefreshEnv.cmd '
-                export msys2+='& set MSYS=winsymlinks:nativestrict '
-                export msys2+='& C:\\tools\\msys64\\msys2_shell.cmd -defterm -no-start'
-                export mingw64="$msys2 -mingw64 -full-path -here -c "\"\$@"\" --"
-                export msys2+=" -msys2 -c "\"\$@"\" --"
-                $msys2 pacman --sync --noconfirm --needed mingw-w64-x86_64-toolchain
-                echo "export PATH='/C/tools/msys64/mingw64/bin:$PATH'" >> $BASH_ENV
-          - run:
-              name: Install Go for Windows
-              command: |
-                git clone https://go.googlesource.com/go
-                cd go
-                git checkout go<< parameters.version >>
-                cd src
-                go_path=$(which go)
-                export GOROOT_BOOTSTRAP="${go_path%/*/*}"
-                ./make.bat
-                echo "export PATH='/c/users/circleci/project/go/bin:/c/users/circleci/go/bin:$PATH'" >> $BASH_ENV
-                rm -rf "$GOROOT_BOOTSTRAP"
-          - run:
-              name: Verify Go installation
-              command: echo "Installed " && go version
-
-# Test resource classes
-executors:
-  linux:
-    docker:
-      - image: cimg/go:1.16
-        auth:
-          username: $DOCKER_USERNAME
-          password: $DOCKER_PASSWORD
-    resource_class: large
-  osx:
-    macos:      
-      xcode: 12.5.1
-      resource_class: macos.x86.medium.gen2
-  windows:
-    machine:
-      image: "windows-server-2019-vs2019:stable"
-      # Verify docs for Windows resource_class
-      resource_class: windows.large
-      shell: bash -eo pipefail
 
 jobs:
+  provision-runners:
+    docker:
+      - image: terraform/default
+    steps:
+      - add_ssh_keys:
+          fingerprints: 30:95:d7:ba:f9:0f:10:b2:6b:d9:67:8a:ef:81:a9:89
+      - run:
+          name: Create .terraformrc file locally
+          command: >-
+            echo "credentials \"app.terraform.io\" {token =
+            \"$TERRAFORM_TOKEN\"}" > $HOME/.terraformrc
+      - terraform/apply:
+          checkout: true
+          path: terraform/digitalocean
+      - persist_to_workspace:
+          root: $HOME
+          paths: .terraformrc
   build-static:
     parameters:
       go_version:
@@ -120,39 +52,19 @@ jobs:
       EXPECT_LINK_INFO: static
     steps:
       - checkout
-      # Add orb support for Windows go/install
-      - unless:
-          condition:
-            equal: [ << parameters.platform >>, "windows" ]
-          steps:
-            - go/install:
-                version: << parameters.go_version >>
-      # - when:
-      #     condition:
-      #       equal: [ << parameters.platform >>, "windows" ]
-      #     steps:
-      #       - wingo/install:
-      #           version: << parameters.go_version >>
-      # - when:
-      #     condition:
-      #       equal: [ << parameters.platform >>, "osx" ]
-      #     steps:
-      #       - run:
-      #           name: Set up environment for mac
-      #           command: |
-      #             echo 'export PATH="/Users/olukotun-ts/go/bin:$PATH"' >> $BASH_ENV
+      - go/install:
+          version: << parameters.go_version >>
       - run: go get -u golang.org/x/lint/golint && touch .do_lint
       - run: go mod init github.com/confluentinc/confluent-kafka-go
-      # - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
-      # - run: for dir in kafka examples ; do (cd $dir && go install $BUILD_TYPE ./...) ; done
-      # - run: if [[ -f .do_lint ]]; then golint -set_exit_status ./examples/... ./kafka/... ./kafkatest/... ./soaktest/... ; fi
-      # - run: for dir in kafka ; do (cd $dir && go test -timeout 180s -v $BUILD_TYPE ./...) ; done
-      # - run: go-kafkacat --help
-      # - run: library-version
-      # - run: (library-version | grep "$EXPECT_LINK_INFO") || (echo "Incorrect linkage, expected $EXPECT_LINK_INFO" ; false)
+      - attach_workspace:
+          at: $HOME
       - persist_to_workspace:
           root: .
           paths: kafka*
+      - terraform/destroy:
+          name: Tear down runners
+          when: always
+          path: terraform/digitalocean
   check-cloud:
     docker:
       - image: cimg/go:1.17
@@ -167,48 +79,3 @@ jobs:
       - attach_workspace:
           at: tmp-space
       - run: ls -al tmp-space
-  build-dynamic:
-    parameters:
-      go_version:
-        description: Version of Go to use
-        type: string
-        default: "1.16"
-      platform:
-        description: The target for the build. Must be one of "linux", or "osx".
-        type: enum
-        enum: ["linux", "osx"]
-        default: "linux"
-    executor: << parameters.platform >>
-    environment:
-      EXPECT_LINK_INFO: dynamic
-      BUILD_TYPE: -tags dynamic
-      LIBRDKAFKA_VERSION: master
-      PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
-      LD_LIBRARY_PATH: /usr/local/lib
-      DYLD_LIBRARY_PATH: /usr/local/lib
-    steps:
-      - checkout
-      - go/install:
-          version: << parameters.go_version >>
-      - when:
-          condition:
-            equal: [ << parameters.platform >>, "osx" ]
-          steps:
-            - run:
-                name: Set up environment for mac
-                command: |
-                  echo 'export PATH="/Users/distiller/go/bin:/usr/local/opt/openssl/bin:$PATH"' >> $BASH_ENV
-                  echo 'export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/openssl/lib/pkgconfig"' >> $BASH_ENV
-                  brew update
-                  brew install pkg-config
-      - run: if [[ -n $BUILD_TYPE ]]; then sudo bash mk/bootstrap-librdkafka.sh ${LIBRDKAFKA_VERSION} /usr/local ; fi
-      - run: go get -u golang.org/x/lint/golint && touch .do_lint
-      - run: go mod init github.com/confluentinc/confluent-kafka-go
-      - run: for dir in kafka examples ; do (cd $dir && go get $BUILD_TYPE ./...) ; done
-      - run: for dir in kafka examples ; do (cd $dir && go install $BUILD_TYPE ./...) ; done
-      - run: if [[ -f .do_lint ]]; then golint -set_exit_status ./examples/... ./kafka/... ./kafkatest/... ./soaktest/... ; fi
-      - run: for dir in kafka ; do (cd $dir && go test -timeout 180s -v $BUILD_TYPE ./...) ; done
-      - run: go-kafkacat --help
-      - run: library-version
-      - run: (library-version | grep "$EXPECT_LINK_INFO") || (echo "Incorrect linkage, expected $EXPECT_LINK_INFO" ; false)
-  
