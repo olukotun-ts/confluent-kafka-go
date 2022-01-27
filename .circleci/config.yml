@@ -12,6 +12,9 @@ workflows:
           requires:
             - provision-runners
           post-steps:
+            - terraform/install
+            - terraform/init:
+                path: terraform/digitalocean
             - terraform/destroy:
                 path: terraform/digitalocean
       - check-cloud:
